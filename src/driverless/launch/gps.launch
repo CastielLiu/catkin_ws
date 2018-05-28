@@ -1,0 +1,10 @@
+<!--  
+-->
+
+<launch>
+	<arg name ="gps_port"     default = "/dev/ttyUSB0"/>
+	
+	 <node name="gps_node" pkg="driverless" type="gps_node" output="screen">
+	   	 <param name="gps_port_name" type="string"  value = "$(arg gps_port)" />
+	 </node>
+</launch>
