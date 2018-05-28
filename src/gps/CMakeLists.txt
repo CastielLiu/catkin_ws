@@ -202,5 +202,6 @@ include_directories(
 include_directories(${catkin_INCLUDE_DIRS}  include/gps)
 add_executable(gps_node src/gps.cpp src/open_usart.cpp )
 target_link_libraries(gps_node  ${catkin_LIBRARIES})
+add_dependencies(gps_node ${PROJECT_NAME}_gencpp)
 
 
