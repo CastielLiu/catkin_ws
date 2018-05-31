@@ -31,7 +31,6 @@ void Control_by_gps::run()
 Control_by_gps::Control_by_gps()
 {
 	now_location   = {0.0,0.0,0.0};
-	start_location = {0.0,0.0,0.0};
 	target_location= {0.0,0.0,0.0};
 	rectangular =    {0.0,0.0,0.0,0.0};
 	//初始化为1 "已经到达（第一个）目标点"，目的是把当前位置设置为起始点
