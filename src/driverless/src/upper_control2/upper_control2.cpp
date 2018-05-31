@@ -21,7 +21,6 @@ void Control_by_gps::run()
 		ROS_INFO("open %s failed !!!",file_path.c_str());
 		return ;
 	}
-	//fscanf(fp,"%lf,%lf\n",&target_location.lon,&target_location.lat); //read the first target point
 	
 	control_pub= nh.advertise<geometry_msgs::Twist>("/cmd_vel",10);
 	ros::Subscriber gps_sub = nh.subscribe<driverless::Gps>("/gps_data",1, &Control_by_gps::gps_callback,this);
@@ -71,9 +70,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	
 	if(arrive_target_flag==1)
 	{
-	//如果到达了目标点，把当前点设为起始点，并且读入一个新的目标点
-	//第一次回调时，把当前位置作为起始位置
-		start_location = now_location;
+	//离目标点距离小于阈值,读入一个新的目标点
 		if(feof(fp))
 		{
 			ROS_INFO("finish ......");
@@ -81,13 +78,8 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 		}
 		fscanf(fp,"%lf,%lf\n",&target_location.lon,&target_location.lat); //read a new target point
 		
-		relative_X_Y_dis_yaw(start_location,target_location,&rectangular,1); //计算起始期望航向角
-		
-		t_yaw_start = rectangular.t_yaw ;
-		
-		arrive_target_flag =0;  //!!!
+		arrive_target_flag =0;  
 	}
-	
 	
 	relative_X_Y_dis_yaw(now_location,target_location,&rectangular,1); //当前点与目标点的相对信息
 	
@@ -106,7 +98,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	float turning_radius = 0.5*dis2end/sin(yaw_err*PI_/180) ; //modify DisThreshold -> dis2end
 
 	if(fabs(turning_radius) < RadiusThreshold )
-		linear_speed = 0.2;//转弯半径太小，//请求读取下一个点//或者 降低速度 
+		linear_speed = 0.2;//转弯半径太小， 降低速度 
 	else
 		linear_speed = linear_speed_temp_buf;
 		
@@ -114,10 +106,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	
 	
 	//angular_speed = PID1_realize(&angular_speed_pid,0.0,yaw_err);  //lateral_err -> yaw_err
-	
-	//float speed = sqrt(gps_msg->east_velocity * gps_msg->east_velocity + gps_msg->north_velocity*gps_msg->north_velocity);
-	//float cal_yaw = atan2(gps_msg->east_velocity,gps_msg->north_velocity)*180./PI_;
-	
+		
 	printf("t_yaw_now=%f yaw= %f  yaw_err=%f  angular_speed=%f\r\n",t_yaw_now,now_location.yaw,yaw_err,angular_speed);
 	
 	printf("dis2end = %f  lateral_err=%f turning_radius=%f\r\n\r\n",dis2end,lateral_err,turning_radius);
