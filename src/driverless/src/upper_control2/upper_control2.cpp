@@ -6,8 +6,10 @@ void Control_by_gps::run()
 	ros::NodeHandle nh;
 	ros::NodeHandle private_nh("~");
 	
-	private_nh.param<float>("linear_speed",linear_speed,0.5);
+	private_nh.param<float>("linear_speed",linear_speed_temp_buf,0.5);
 	private_nh.param<float>("DisThreshold",DisThreshold,2.);
+	private_nh.param<float>("RadiusThreshold",RadiusThreshold,1.);
+	
 	private_nh.param<float>("angular_speed_pid_Kp",angular_speed_pid.Kp,0.0);
 	private_nh.param<float>("angular_speed_pid_Ki",angular_speed_pid.Ki,0.0);
 	private_nh.param<float>("angular_speed_pid_Kd",angular_speed_pid.Kd,0.0);
@@ -55,6 +57,7 @@ void Control_by_gps::relative_X_Y_dis_yaw(gps_sphere_t  gps_base,gps_sphere_t  g
 	}
 }
 
+
 float Control_by_gps::LateralError(double t_yaw_start,double t_yaw_now,float dis2end)
 {
 	return (sin((t_yaw_start - t_yaw_now)*PI_/180)) *dis2end;
@@ -64,7 +67,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 {
 	now_location.lon = gps_msg->lon;
 	now_location.lat = gps_msg->lat; 
-	now_location.yaw = gps_msg->yaw;
+	now_location.yaw = gps_msg->yaw; 
 	
 	if(arrive_target_flag==1)
 	{
@@ -93,21 +96,32 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	dis2end = rectangular.distance;
 	
 	
-	if(dis2end < DisThreshold)
+	if(dis2end < DisThreshold) //arrive_target  prepare to read next point
 		arrive_target_flag =1;
 	
 	float lateral_err =  LateralError(t_yaw_start,t_yaw_now, dis2end);
 	
 	float yaw_err = now_location.yaw - t_yaw_now; 
 	
-	angular_speed = PID1_realize(&angular_speed_pid,0.0,lateral_err);
+	float turning_radius = 0.5*dis2end/sin(yaw_err*PI_/180) ; //modify DisThreshold -> dis2end
+
+	if(fabs(turning_radius) < RadiusThreshold )
+		linear_speed = 0.2;//转弯半径太小，//请求读取下一个点//或者 降低速度 
+	else
+		linear_speed = linear_speed_temp_buf;
+		
+	angular_speed = linear_speed / turning_radius ;  
 	
-	float speed = sqrt(gps_msg->east_velocity * gps_msg->east_velocity + gps_msg->north_velocity*gps_msg->north_velocity);
-	float cal_yaw = atan2(gps_msg->east_velocity,gps_msg->north_velocity)*180./PI_;
 	
-	printf("yaw_err=%f\r\n",yaw_err);
-	//printf("dis2end = %f  lateral_err=%f  angular_speed=%f\n",dis2end,lateral_err,angular_speed);
-	//printf("east_velocity=%f  north_velocity=%f  gps_yaw=%f\n",gps_msg->east_velocity,gps_msg->north_velocity,gps_msg->yaw);
+	//angular_speed = PID1_realize(&angular_speed_pid,0.0,yaw_err);  //lateral_err -> yaw_err
+	
+	//float speed = sqrt(gps_msg->east_velocity * gps_msg->east_velocity + gps_msg->north_velocity*gps_msg->north_velocity);
+	//float cal_yaw = atan2(gps_msg->east_velocity,gps_msg->north_velocity)*180./PI_;
+	
+	printf("t_yaw_now=%f yaw= %f  yaw_err=%f  angular_speed=%f\r\n",t_yaw_now,now_location.yaw,yaw_err,angular_speed);
+	
+	printf("dis2end = %f  lateral_err=%f turning_radius=%f\r\n\r\n",dis2end,lateral_err,turning_radius);
+	//printf("gps_yaw=%f  dis2end=%f\n\r\n",gps_msg->yaw,dis2end);
 	//printf("cal_speed = %f   cal_yaw =%f\n",speed,cal_yaw);
 	
 	controlMsg.angular.z = angular_speed;   

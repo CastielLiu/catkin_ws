@@ -37,11 +37,11 @@ class Control_by_gps
 		std::string file_path;
 		double t_yaw_start,t_yaw_now;
 		float dis2end;
-		float DisThreshold;
+		float DisThreshold,RadiusThreshold;
 		unsigned char arrive_target_flag;
 		
 		geometry_msgs::Twist controlMsg;
-		float linear_speed,angular_speed;
+		float linear_speed,angular_speed , linear_speed_temp_buf;
 		pid_t_ angular_speed_pid;
 		pid_t_ liner_speed_pid;
 		

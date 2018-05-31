@@ -27,13 +27,15 @@
     </node>
     
    
-    <node name="upper_control_node" pkg="driverless" type="upper_control_node" output="screen">
+    <node name="upper_control_node" pkg="driverless" type="upper_control2_node" output="screen">
     	<param name="linear_speed" value="0.5"/>
     	<param name="angular_speed_pid_Kp" value="-0.08"/>
     	<param name="angular_speed_pid_Ki" value="-0.000005"/>
     	<param name="angular_speed_pid_Kd" value="-0.08"/>    	    	
-    	<param name="DisThreshold" value="3."/>
-    	<param name="file_path" value="$(find driverless)/data/data.txt"/>
+    	<param name="DisThreshold" value="2."/>
+    	<param name="RadiusThreshold" value="3."/>
+    	
+    	<param name="file_path" value="$(find driverless)/data/1.txt"/>
     	
     </node>
     
@@ -44,7 +46,7 @@
 	   	 	<param name="gps_port_name" type="string"  value = "$(arg gps_port)" />
 	   	 </node>
     
-    
+    <node name="temp_sub_node" pkg ="test" type="temp_sub_node"/>
  <!--
     <group ns="lidar">
 	  <node pkg="driverless"  type="lidar_node" name="lidar_node" output="screen">
