@@ -30,7 +30,7 @@ typedef struct
 class Control_by_gps
 {
 	private:
-		gps_sphere_t now_location ,start_location ,target_location;
+		gps_sphere_t now_location  ,target_location;
 		gps_rect_t rectangular; //相对直角坐标信息
 		ros::Publisher control_pub;
 		FILE *fp;
@@ -55,10 +55,6 @@ class Control_by_gps
 		~Control_by_gps();
 		void run();
 		
-		
-		
-
-
 };
 
 
