@@ -31,17 +31,18 @@ int publish_lidar_data(
     msg.range_min = ldConst.range_min;
     msg.range_max = ldConst.range_max;
     msg.ranges.resize(align_cnt);
-    msg.intensities.resize(align_cnt);
+    msg.intensities.resize(align_cnt);//360 points
 
     int j;
     int j_min = 0;
     int j_max = 0;
     int index;
-    int offset = align_cnt / 2;
+    int offset = align_cnt / 2; //angle_offset
     for (int i=0;i<align_cnt;i++)
     {
         j_min = j_max;
-        j_max = (i+1)*actual_cnt/align_cnt - 1;
+        j_max = (i+1)*actual_cnt/align_cnt - 1; //actual_cnt = 5760
+        // the main target is find the right point between min and max
         for (j=j_min;j<j_max;j++)
         {
             //printf("j: %d, j_min: %d, j_max: %d\n", j, j_min, j_max);
@@ -50,7 +51,8 @@ int publish_lidar_data(
             {
                 index = align_cnt + index;
             }
-            if ((node+j)->distance > 1 && (node+j)->distance < 3500)
+            //////////////////////////////perhaps the segment can write out of the for cycle!!!
+            if ((node+j)->distance > 1 && (node+j)->distance < 3500)//node have 5760 
             {
                 //printf("distance: %d\n", (node+j)->distance);
                 msg.ranges[index] = (node+j)->distance * ldConst.kDistance;
@@ -110,10 +112,11 @@ int main(int argc, char **argv)
     ROS_INFO("done!");
     while (ros::ok())
     {
-        ldn_cnt = fsld.getOnePoint(ldn, origin_data);//total points number    ldn[] use to storage all points
+   		 //total points number
+        ldn_cnt = fsld.getOnePoint(ldn, origin_data);//    ldn[] use to storage all points
         //ROS_INFO("ldn_cnt = %d",ldn_cnt);
         
-        for(int i=0;i<ldn_cnt;i++)
+        for(int i=0;i<ldn_cnt;i++) 
         {
             ldn_tmp = ldn + i;
             if(ldn_tmp->angle+240<last_anl)    //the current angle < last angle  show that a old cycle end

@@ -8,7 +8,7 @@
 class Record
 {
 	private:
-		void gps_callback(const driverless::Gps::ConstPtr& gpsMsg);
+		void gps_callback(const driverless::Gps& gpsMsg);
 		FILE *fp;
 		driverless::Gps last_point;
 		float sample_distance;
@@ -50,18 +50,30 @@ void Record:: run()
 }
 
 
-void Record::gps_callback(const driverless::Gps::ConstPtr& gpsMsg)
+//void Record::gps_callback(const driverless::Gps::ConstPtr& gpsMsg)
+//{
+//	float x = (gpsMsg->lon -last_point.lon)*111000*cos(gpsMsg->lat *PI_/180.);
+//	float y = (gpsMsg->lat -last_point.lat ) *111000;
+
+//	if(x*x+y*y >= sample_distance*sample_distance)	
+//	{
+//		fprintf(fp,"%.8f\t%.8f\r\n",gpsMsg->lon,gpsMsg->lat);
+//		ROS_INFO("%.8f\t%.8f\r\n",gpsMsg->lon,gpsMsg->lat);
+//		last_point = *gpsMsg;
+//	}
+//}
+
+void Record::gps_callback(const driverless::Gps& gpsMsg)
 {
-	float x = (gpsMsg->lon -last_point.lon)*111000*cos(gpsMsg->lat *PI_/180.);
-	float y = (gpsMsg->lat -last_point.lat ) *111000;
+	float x = (gpsMsg.lon -last_point.lon)*111000*cos(gpsMsg.lat *PI_/180.);
+	float y = (gpsMsg.lat -last_point.lat ) *111000;
 
 	if(x*x+y*y >= sample_distance*sample_distance)	
 	{
-		fprintf(fp,"%.8f\t%.8f\r\n",gpsMsg->lon,gpsMsg->lat);
-		ROS_INFO("%.8f\t%.8f\r\n",gpsMsg->lon,gpsMsg->lat);
-		last_point = *gpsMsg;
+		fprintf(fp,"%.8f\t%.8f\r\n",gpsMsg.lon,gpsMsg.lat);
+		ROS_INFO("%.8f\t%.8f\r\n",gpsMsg.lon,gpsMsg.lat);
+		last_point = gpsMsg;
 	}
-
 }
 
 
