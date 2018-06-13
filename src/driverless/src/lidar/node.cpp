@@ -31,7 +31,7 @@ int publish_lidar_data(
     msg.range_min = ldConst.range_min;
     msg.range_max = ldConst.range_max;
     msg.ranges.resize(align_cnt);
-    msg.intensities.resize(align_cnt);//360 points
+    msg.intensities.resize(align_cnt);
 
     int j;
     int j_min = 0;
@@ -93,9 +93,9 @@ int main(int argc, char **argv)
     nh_private.param<int>("sample_rate", sample_rate, 5000); 
     nh_private.param<int>("rotational_speed", rotational_speed, 5);
     //align_number = sample_rate / rotational_speed;
-    align_number = 360;
+    align_number = 576;
     nh_private.param<std::string>("frame_id", frame_id, "/lidar_frame");
-    nh_private.param<std::string>("dev_path", dev_path, "/dev/fslidar");
+    nh_private.param<std::string>("dev_path", dev_path, "/dev/ttyUSB0");
     nh_private.param<bool>("origin_data", origin_data, false);
     std::string scan_topic_str;
     nh_private.param<std::string>("scan_topic", scan_topic_str, "/scan");
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
                     scan_duration,
                     ldn_array,
                     5760,          //actual_cnt
-                    align_number); //360points /cycle
+                    align_number); 
                     
                 memset((void *)ldn_array, 0, 5760*sizeof(LaserDataNode));
                 last_anl = -1;
