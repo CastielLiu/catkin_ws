@@ -37,7 +37,9 @@ int publish_lidar_data(
     int j_min = 0;
     int j_max = 0;
     int index;
-    int offset = align_cnt / 2; //angle_offset
+    int offset = align_cnt / 2 - align_cnt/8; //angle_offset
+    // 如果雷达顺时针偏转45度，及1/8圈，则offset 应该 减去 1/8align_cnt
+    
     for (int i=0;i<align_cnt;i++)
     {
         j_min = j_max;
