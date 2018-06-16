@@ -228,7 +228,10 @@ add_executable(car_status_node src/car_status/car_status.cpp)
 add_dependencies(car_status_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(car_status_node ${catkin_LIBRARIES})
 
-add_executable(upper_control2_node src/upper_control2/upper_control2.cpp  src/upper_control2/pid.cpp)
+add_executable(upper_control2_node src/upper_control2/upper_control2.cpp  
+								   src/upper_control2/pid.cpp
+								   src/upper_control2/control_by_gps.cpp
+								   src/upper_control2/control_by_lidar.cpp)
 add_dependencies(upper_control2_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(upper_control2_node ${catkin_LIBRARIES})
 
