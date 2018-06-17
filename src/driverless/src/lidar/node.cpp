@@ -3,6 +3,7 @@
 #include <ros/time.h>
 #include <sensor_msgs/LaserScan.h>
 #include <geometry_msgs/Twist.h>
+#include<tf/transform_listener.h> //1
 
 #include <stdio.h>
 
@@ -66,6 +67,7 @@ int publish_lidar_data(
             msg.intensities[index] = 0.0;
         }
     }
+    
     pub.publish(msg);
     return 0;
 }
