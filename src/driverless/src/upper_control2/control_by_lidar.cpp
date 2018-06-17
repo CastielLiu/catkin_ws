@@ -115,7 +115,6 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 					target[target_seq].end_point = last_valid_point;
 					target_seq ++;
 				}
-					
 			}	
 		}
 	}
@@ -165,19 +164,5 @@ void Control_by_lidar::write_marker(targetMsg * target)
 }
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
