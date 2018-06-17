@@ -1,0 +1,62 @@
+<!-- -->
+
+<launch>
+	<arg name ="gps_port"     default = "/dev/ttyUSB0"/>
+	<arg name ="lidar_port"   default = "/dev/ttyUSB2"/>
+	<arg name ="control_port" default = "/dev/ttyUSB1"/>
+	<arg name ="scan_topic"   default = "/scan"/>
+	
+	
+    <node name="lower_control_node" pkg="driverless" type="lower_control_node">
+    
+        <param name="port_name" value="$(arg control_port)" />
+        <param name="odom_frame" value="odom" />
+        <param name="base_frame" value="base_link"/>
+
+        <param name="baud_rate" value="115200" />
+        <param name="control_rate" value="10" />
+        <param name="sensor_rate" value="5" />
+
+        <param name="reduction_ratio" value="1.0" />
+        <param name="encoder_resolution" value="1600.0" />
+
+        <param name="wheel_diameter" value="0.25" />
+        <param name="model_param" value="0.83" />
+        <param name="pid_rate" value="50.0" />
+		<param name="maximum_encoding" value="32.0" />
+    </node>
+    
+   
+    <node name="upper_control_node" pkg="driverless" type="upper_control2_node" output="screen">
+    	<param name="linear_speed" value="0.5"/>
+    	<param name="angular_speed_pid_Kp" value="-0.08"/>
+    	<param name="angular_speed_pid_Ki" value="-0.000005"/>
+    	<param name="angular_speed_pid_Kd" value="-0.08"/>    	    	
+    	<param name="DisThreshold" value="2."/>
+    	<param name="RadiusThreshold" value="3."/>
+    	
+    	<param name="file_path" value="$(find driverless)/data/1.txt"/>
+    	
+    </node>
+    
+    <!--node name="car_status_node" pkg="driverless" type="car_status_node" output="screen" /--> 
+    
+    
+	   	 <node name="gps_node" pkg="driverless" type="gps_node">
+	   	 	<param name="gps_port_name" type="string"  value = "$(arg gps_port)" />
+	   	 </node>
+ 
+    <group ns="lidar">
+	  <node pkg="driverless"  type="lidar_node" name="lidar_node" >
+		<param name="dev_path"         type="string" 	value="$(arg lidar_port)"/>
+		<param name="inverted"            type="bool"   value="false"/>
+		<param name="frame_id"            type="string" value="/lidar_frame"/>
+		<param name="sample_rate"         type="int"    value="5000"/>
+		<param name="rotational_speed"    type="int"    value="5"/>
+		<param name="scan_topic"            type="string"   value="$(arg scan_topic)"/>
+	  </node>
+    </group>
+ 
+    
+    
+</launch>

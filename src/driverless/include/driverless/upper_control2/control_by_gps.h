@@ -32,7 +32,9 @@ class Control_by_gps
 	private:
 		gps_sphere_t now_location ,start_location ,target_location;
 		gps_rect_t rectangular; //相对直角坐标信息
-		ros::Publisher control_pub;
+		//ros::Publisher control_pub;
+		ros::Subscriber gps_sub ;
+		
 		FILE *fp;
 		std::string file_path;
 		double t_yaw_start,t_yaw_now;
@@ -40,7 +42,6 @@ class Control_by_gps
 		float DisThreshold,RadiusThreshold;
 		unsigned char arrive_target_flag;
 		
-		geometry_msgs::Twist controlMsg;
 		float linear_speed,angular_speed , linear_speed_temp_buf;
 		pid_t_ angular_speed_pid;
 		pid_t_ liner_speed_pid;
@@ -48,12 +49,14 @@ class Control_by_gps
 		void init();
 		float LateralError(double t_yaw_start,double t_yaw_now,float dis2end);
 		void relative_X_Y_dis_yaw(gps_sphere_t  gps_base,gps_sphere_t  gps,gps_rect_t *rectangular,unsigned char num);
-		void gps_callback(const driverless::Gps::ConstPtr& gps_msg);
+		
 		
 	public:
+		geometry_msgs::Twist controlMsg;
 		Control_by_gps();
 		~Control_by_gps();
 		void run();
+		void gps_callback(const driverless::Gps::ConstPtr& gps_msg);
 		
 		
 };

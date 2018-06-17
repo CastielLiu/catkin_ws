@@ -38,8 +38,9 @@ int publish_lidar_data(
     int j_min = 0;
     int j_max = 0;
     int index;
-    int offset = align_cnt / 2 - align_cnt/8; //angle_offset
-    // 如果雷达顺时针偏转45度，及1/8圈，则offset 应该 减去 1/8align_cnt
+    //int offset = align_cnt / 2 - align_cnt/8; //angle_offset
+    int offset = align_cnt/8;
+    // 如果雷达顺时针偏转45度，及1/8圈，则offset 应该 align_cnt/8
     
     for (int i=0;i<align_cnt;i++)
     {
@@ -48,12 +49,16 @@ int publish_lidar_data(
         // the main target is find the right point between min and max
         for (j=j_min;j<j_max;j++)
         {
-            //printf("j: %d, j_min: %d, j_max: %d\n", j, j_min, j_max);
-            index = align_cnt - offset - i;
-            if (index < 0)
-            {
-                index = align_cnt + index;
-            }
+           // index = align_cnt - offset - i;
+           // if (index < 0)
+          //  {
+           //     index = align_cnt + index;
+            //}
+            index =i + offset;
+            if(index >align_cnt-1)
+            	index = index - align_cnt;
+            
+            
             //////////////////////////////perhaps the segment can write out of the for cycle!!!
             if ((node+j)->distance > 1 && (node+j)->distance < 3500)//node have 5760 
             {

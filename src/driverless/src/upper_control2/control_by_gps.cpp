@@ -12,17 +12,16 @@ void Control_by_gps::run()
 	private_nh.param<float>("angular_speed_pid_Kp",angular_speed_pid.Kp,0.0);
 	private_nh.param<float>("angular_speed_pid_Ki",angular_speed_pid.Ki,0.0);
 	private_nh.param<float>("angular_speed_pid_Kd",angular_speed_pid.Kd,0.0);
-	private_nh.param<std::string>("file_path",file_path,std::string("/home/wendao/catkin_ws2/src/driverless/data/data.txt"));
+	private_nh.param<std::string>("file_path",file_path,std::string("/home/wendao/projects/catkin_ws/src/driverless/data/1.txt"));
 	
 	fp = fopen(file_path.c_str(),"r");
 	if(fp==NULL) 
 	{
 		ROS_INFO("open %s failed !!!",file_path.c_str());
-		return ;
+		exit(0) ;
 	}
-	
-	control_pub= nh.advertise<geometry_msgs::Twist>("/cmd_vel",10);
-	ros::Subscriber gps_sub = nh.subscribe<driverless::Gps>("/gps_data",1, &Control_by_gps::gps_callback,this);
+	gps_sub = nh.subscribe<driverless::Gps>("/gps_data",5, &Control_by_gps::gps_callback,this);
+	//ros::spin();
 }
 
 Control_by_gps::Control_by_gps()
@@ -61,6 +60,7 @@ float Control_by_gps::LateralError(double t_yaw_start,double t_yaw_now,float dis
 
 void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //Callback
 {
+
 	now_location.lon = gps_msg->lon;
 	now_location.lat = gps_msg->lat; 
 	now_location.yaw = gps_msg->yaw; 
@@ -104,14 +104,14 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	
 	//angular_speed = PID1_realize(&angular_speed_pid,0.0,yaw_err);  //lateral_err -> yaw_err
 		
-	printf("t_yaw_now=%f yaw= %f  yaw_err=%f  angular_speed=%f\r\n",t_yaw_now,now_location.yaw,yaw_err,angular_speed);
+	//printf("t_yaw_now=%f yaw= %f  yaw_err=%f  angular_speed=%f\r\n",t_yaw_now,now_location.yaw,yaw_err,angular_speed);
 	
-	printf("dis2end = %f  lateral_err=%f turning_radius=%f\r\n\r\n",dis2end,lateral_err,turning_radius);
+	//printf("dis2end = %f  lateral_err=%f turning_radius=%f\r\n\r\n",dis2end,lateral_err,turning_radius);
 	//printf("gps_yaw=%f  dis2end=%f\n\r\n",gps_msg->yaw,dis2end);
 	//printf("cal_speed = %f   cal_yaw =%f\n",speed,cal_yaw);
 	
 	controlMsg.angular.z = angular_speed;   
 	controlMsg.linear.x = linear_speed;
 	
-	control_pub.publish(controlMsg); //gps control the car have condition (are there a obstacle?)  
+	//control_pub.publish(controlMsg); //gps control the car have condition (are there a obstacle?)  
 }

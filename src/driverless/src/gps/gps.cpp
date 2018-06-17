@@ -25,8 +25,9 @@ int main(int argc,char **argv)
 	ros::init(argc,argv,"gps_node");
 	
 	std::string gps_port_name;
-	ros::param::get("~gps_port_name",gps_port_name);
-
+	//ros::param::get("~gps_port_name",gps_port_name);
+	ros::NodeHandle nh_private("~");
+	nh_private.param<std::string>("gps_port_name",gps_port_name,"/dev/ttyUSB0");
 	int fd = open_usart((char *)(gps_port_name.c_str()));
 	if(fd == -1) 
 	{

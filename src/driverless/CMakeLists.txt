@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   message_generation
+  visualization_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -234,6 +235,7 @@ add_executable(upper_control2_node src/upper_control2/upper_control2.cpp
 								   src/upper_control2/control_by_lidar.cpp)
 add_dependencies(upper_control2_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(upper_control2_node ${catkin_LIBRARIES})
+
 
 add_executable(record_data_node src/record_data/record_data.cpp)
 add_dependencies(record_data_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)

@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 		points.scale.y = 1.2;
 		
 		points.color.g = 1.0;
-		points.color.a = 1.0;
+		points.color.a = 1.0;//transparency 透明度 
 		
 		geometry_msgs::Point p;
 		p.x = (GPS.lat + count)/10;

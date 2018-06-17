@@ -1,25 +1,50 @@
 #include"control_by_gps.h"
-#include<geometry_msgs/Twist.h>
+#include"control_by_lidar.h"
 
 
 int main(int argc,char**argv)
 {
 	ros::init(argc,argv,"upper_control_node");
 	
-	//ros::Publisher control_pub;
+	ros::NodeHandle nh;
 	
-	//control_pub= nh.advertise<geometry_msgs::Twist>("/cmd_vel",10);
+	ros::Publisher control_pub;
+	
+	control_pub= nh.advertise<geometry_msgs::Twist>("/cmd_vel",10);
+	
+	geometry_msgs::Twist controlMsg;
 	
 	Control_by_gps gps;
 	
-	//Control_by_lidar lidar;
+	Control_by_lidar lidar;
  	
  	gps.run();
  	
- 	//lidar.run();
+ 	lidar.run();
  	
- 	ros::spin();
+ 	ros::Rate rate(20);
  	
+ 	while(ros::ok())
+ 	{
+ 		if(lidar.IS_Barrier ==0)
+ 		{
+ 			controlMsg = gps.controlMsg;
+ 		}
+ 			
+ 		else
+ 		{
+	 		controlMsg = lidar.controlMsg;
+ 		}
+ 		
+ 		//ROS_INFO("IS_Barrier = %d",lidar.IS_Barrier);	
+ 			
+ 		control_pub.publish(controlMsg);
+ 		
+ 		ros::spinOnce();
+ 		
+ 		rate.sleep();
+ 	
+ 	}
  	return 0;
 }
 
