@@ -4,4 +4,15 @@
 
 #include<iostream>
 
+
+class Control_by_lidar
+{
+	private:
+	
+	public:
+		Control_by_lidar();
+		~Control_by_lidar();
+		void run();
+		
+};
 #endif
