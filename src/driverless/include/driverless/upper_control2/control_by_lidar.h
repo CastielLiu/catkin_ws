@@ -9,6 +9,7 @@
 #define TARGET_NUM 30
 #define POINT_NUM_CYCLE 576
 #define CLUSTER_MIN_DIS 0.17 //17cm
+#define TARGET_DIS_SCOPE  3.0 //3m
 
 #define SHOW_TARGET 1
 
@@ -21,6 +22,7 @@ typedef struct
 typedef struct
 {
 	polar_point_t start_point;
+	polar_point_t middle_point;
 	polar_point_t end_point;
 }targetMsg;
 
@@ -39,7 +41,7 @@ class Control_by_lidar
 		polar_point_t last_valid_point;
 		polar_point_t now_point;
 #if(SHOW_TARGET==1)
-		visualization_msgs::Marker points;
+		
 		void write_marker(targetMsg * target);
 		ros::Publisher target_pub;
 #endif	

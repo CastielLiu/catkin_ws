@@ -7,30 +7,33 @@
 void Control_by_lidar::callback(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	//ROS_INFO("lidar_callback");
-	create_target(msg);
+	
 #if(SHOW_TARGET==1)	
+	create_target(msg);
 	write_marker(target);
 
 #endif	
-	char IS_Barrier = whereBarrier(msg);
+	IS_Barrier = whereBarrier(msg);
 	//ROS_INFO("IS_Barrier=%d",IS_Barrier);
 	if(IS_Barrier<0)
 	{
-		controlMsg.angular.z = 0.5/3.;  //L R=3m
-		controlMsg.linear.x = 0.5;
+		controlMsg.angular.z = -0.1/1.;  //L R=3m
+		controlMsg.linear.x = 0.1;
 	}
 	else if(IS_Barrier >0)
 	{
-		controlMsg.angular.z = -0.5/3.;  //R R=3m
-		controlMsg.linear.x = 0.5;
+		controlMsg.angular.z = 0.1/1.;  //R R=3m
+		controlMsg.linear.x = 0.1;
 	}
 }
 
 Control_by_lidar::Control_by_lidar()
 {
 	IS_Barrier = 0;
+	
 	CAR_FRONT_SAFETY_DIS = 2; //2m
-	CAR_LR_SAFETY_DIS = 0.4; //0.4m
+	CAR_LR_SAFETY_DIS = 0.45; //0.4m
+	
 	ANGLE_BOUNDARY = atan2(CAR_LR_SAFETY_DIS,CAR_FRONT_SAFETY_DIS);
 	memset(target,sizeof(polar_point_t)*TARGET_NUM ,0);
 	new_target_flag =0;
@@ -92,7 +95,7 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 	{
 		now_point.angle = msg->angle_increment * (i+1);
 		now_point.distance = msg->ranges[i];
-		if(now_point.distance==0 || now_point.distance>20.0) //Invalid target point
+		if(now_point.distance==0 || now_point.distance>TARGET_DIS_SCOPE) //Invalid target point
 			continue;
 		else //valid target point 
 		{
@@ -113,12 +116,17 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 				{
 					new_target_flag =0;
 					target[target_seq].end_point = last_valid_point;
+					target[target_seq].middle_point.angle = (target[target_seq].start_point.angle
+															+target[target_seq].end_point.angle)/2;
+															
+					target[target_seq].middle_point.distance = (target[target_seq].start_point.distance
+															+target[target_seq].end_point.distance)/2;
 					target_seq ++;
 				}
 			}	
 		}
 	}
-	ROS_INFO("target_seq=%d",target_seq);
+	//ROS_INFO("target_seq=%d",target_seq);
 }
 
 #if(SHOW_TARGET==1)

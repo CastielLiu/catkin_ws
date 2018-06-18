@@ -28,15 +28,17 @@ int main(int argc,char**argv)
  	{
  		if(lidar.IS_Barrier ==0)
  		{
- 			controlMsg = gps.controlMsg;
+ 			//controlMsg = gps.controlMsg;
+ 			controlMsg.angular.z = 0; 
+			controlMsg.linear.x = 0.1;
  		}
  			
  		else
  		{
 	 		controlMsg = lidar.controlMsg;
+	 		ROS_INFO("__IS_Barrier = %d",lidar.IS_Barrier);	
  		}
- 		
- 		//ROS_INFO("IS_Barrier = %d",lidar.IS_Barrier);	
+ 	
  			
  		control_pub.publish(controlMsg);
  		
