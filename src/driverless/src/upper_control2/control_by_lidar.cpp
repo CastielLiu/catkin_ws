@@ -37,6 +37,7 @@ Control_by_lidar::Control_by_lidar()
 	ANGLE_BOUNDARY = atan2(CAR_LR_SAFETY_DIS,CAR_FRONT_SAFETY_DIS);
 	memset(target,sizeof(polar_point_t)*TARGET_NUM ,0);
 	new_target_flag =0;
+	new_blank_area_flag = 0;
 	
 	//ROS_INFO("ANGLE_BOUNDARY = %f",ANGLE_BOUNDARY);
 }
@@ -78,7 +79,25 @@ char Control_by_lidar::whereBarrier(const sensor_msgs::LaserScan::ConstPtr& msg)
 	return 0;
 }
 
-float Control_by_lidar::polar_p2p_dis2(polar_point_t point1,polar_point_t point2)
+char Control_by_lidar target_in_scope(polar_point_t point)
+{
+	if(point.angle >0 && point.angle <ANGLE_BOUNDARY && 
+	   point.distance < CAR_FRONT_SAFETY_DIS && point.distance>0)
+	   return 1;
+	else if(point.angle > ANGLE_BOUNDARY && point.angle < PI_/2 &&
+			point.distance<CAR_LR_SAFETY_DIS/sin(point.angle))
+		return 2;
+	else if(point.angle < 2*PI_ && point.angle > 2*PI_-ANGLE_BOUNDARY && 
+	   point.distance <CAR_FRONT_SAFETY_DIS && point.distance>0)
+	   return -1;
+	else if(point.angle < 2*PI_ - ANGLE_BOUNDARY && point.angle > 3*PI_/2 &&
+			point.distance<CAR_LR_SAFETY_DIS/sin(2*PI_-point.angle))
+		return -2;
+	else
+		return 0;
+}
+
+float Control_by_lidar::polar_p2p_dis2(polar_point_t point1,polar_point_t point2) //用于聚合障碍物
 {
 	float theta = point2.angle - point1.angle;
 	
@@ -87,13 +106,22 @@ float Control_by_lidar::polar_p2p_dis2(polar_point_t point1,polar_point_t point2
 			 - 2*point1.distance*point2.distance*cos(theta);
 }
 
+float Control_by_lidar::p2p_projective_dis(polar_point_t point1,polar_point_t point2)//用于计算可通行区域
+{
+	return point2.distance*sin(point2.angle) - point1.distance*sin(point1.angle);
+}
+
 void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	unsigned char target_seq =0;
 	
+	//unsigned char blank_area_seq =0;
+	
 	for(int i=0;i<POINT_NUM_CYCLE;i++)
 	{
 		now_point.angle = msg->angle_increment * (i+1);
+		if(now_point.angle>PI_/2 && now_point.angle<3*PI_/2 ) continue; //只求0到180度内的障碍物
+		
 		now_point.distance = msg->ranges[i];
 		if(now_point.distance==0 || now_point.distance>TARGET_DIS_SCOPE) //Invalid target point
 			continue;
@@ -108,7 +136,7 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 			else
 			{
 				float p2p_dis2 = polar_p2p_dis2(last_valid_point,now_point);
-				if(p2p_dis2 < CLUSTER_MIN_DIS*CLUSTER_MIN_DIS)
+				if(p2p_dis2 < CLUSTER_MAX_DIS*CLUSTER_MAX_DIS)
 				{
 					last_valid_point = now_point;
 				}
@@ -170,6 +198,8 @@ void Control_by_lidar::write_marker(targetMsg * target)
 	}
 	target_pub.publish(points);
 }
+
+
 
 #endif
 
