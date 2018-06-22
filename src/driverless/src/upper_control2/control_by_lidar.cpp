@@ -27,6 +27,7 @@ void Control_by_lidar::callback(const sensor_msgs::LaserScan::ConstPtr& msg)
 	}
 }
 
+
 Control_by_lidar::Control_by_lidar()
 {
 	IS_Barrier = 0;
@@ -79,7 +80,7 @@ char Control_by_lidar::whereBarrier(const sensor_msgs::LaserScan::ConstPtr& msg)
 	return 0;
 }
 
-char Control_by_lidar target_in_scope(polar_point_t point)
+char Control_by_lidar::target_in_scope(polar_point_t point)
 {
 	if(point.angle >0 && point.angle <ANGLE_BOUNDARY && 
 	   point.distance < CAR_FRONT_SAFETY_DIS && point.distance>0)
@@ -173,7 +174,7 @@ void Control_by_lidar::write_marker(targetMsg * target)
 	
 		points.id = 0;
 		points.type = visualization_msgs::Marker::POINTS;
-		points.scale.x = 0.05;
+		points.scale.x = 0.05; 
 		points.scale.y = 0.05;
 		
 		points.color.r = 0.0;

@@ -1,0 +1,7 @@
+digraph G {
+"base_link" -> "lidar_frame"[label="Broadcaster: /car_tf_publisher\nAverage rate: 100.219 Hz\nMost recent transform: 1529589455.418 ( 0.002 sec old)\nBuffer length: 4.989 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1529589455.420"[ shape=plaintext ] ;
+ }->"base_link";
+}
