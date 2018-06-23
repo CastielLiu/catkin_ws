@@ -10,6 +10,7 @@
 #define BLANK_AREA_NUM 10 
 #define POINT_NUM_CYCLE 576
 #define CLUSTER_MAX_DIS 0.6 //60cm the width of car
+//#define SAFTY_SCOPE_MIN_DIS 
 #define TARGET_DIS_SCOPE  10.0 //m
 
 #define SHOW_TARGET 1
@@ -42,6 +43,8 @@ class Control_by_lidar
 		
 		unsigned char new_target_flag;
 		unsigned char new_blank_area_flag;
+		unsigned char target_num;//存放真实目标数
+
 		
 		polar_point_t last_valid_point;
 		polar_point_t now_point;
@@ -54,6 +57,7 @@ class Control_by_lidar
 		void create_target(const sensor_msgs::LaserScan::ConstPtr& msg);
 		float p2p_projective_dis(polar_point_t point1,polar_point_t point2);
 		char target_in_scope(polar_point_t point);
+		void generate_control_msg(void);
 	public:
 		geometry_msgs::Twist controlMsg;
 		char IS_Barrier;

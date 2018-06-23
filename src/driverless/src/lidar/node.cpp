@@ -39,7 +39,7 @@ int publish_lidar_data(
     int j_max = 0;
     int index;
     //int offset = align_cnt / 2 - align_cnt/8; //angle_offset
-    int offset = align_cnt/8;
+    int offset = align_cnt/8 + align_cnt/4; //i want the first point is 270 degree
     // 如果雷达顺时针偏转45度，及1/8圈，则offset 应该 align_cnt/8
     
     for (int i=0;i<align_cnt;i++)
@@ -55,8 +55,11 @@ int publish_lidar_data(
            //     index = align_cnt + index;
             //}
             index =i + offset;
+            
             if(index >align_cnt-1)
             	index = index - align_cnt;
+            else if(index<0)
+            	index = index + align_cnt;
             
             
             //////////////////////////////perhaps the segment can write out of the for cycle!!!
