@@ -26,7 +26,7 @@ int main(int argc,char**argv)
  	
  	while(ros::ok())
  	{
- 		if(lidar.IS_Barrier ==0)
+ 		if(lidar.barrier_num ==0)
  		{
  			//controlMsg = gps.controlMsg;
  			controlMsg.angular.z = 0; 
@@ -36,7 +36,7 @@ int main(int argc,char**argv)
  		else
  		{
 	 		controlMsg = lidar.controlMsg;
-	 		ROS_INFO("__IS_Barrier = %d",lidar.IS_Barrier);	
+	 		ROS_INFO("barrier_num = %d",lidar.barrier_num);	
  		}
  	
  		

@@ -30,6 +30,7 @@ void Control_by_lidar::callback(const sensor_msgs::LaserScan::ConstPtr& msg)
 Control_by_lidar::Control_by_lidar()
 {
 	IS_Barrier = 0;
+	barrier_num = 0;
 	
 	CAR_FRONT_SAFETY_DIS = 2; //m
 	CAR_LR_SAFETY_DIS = 0.45; //m
@@ -53,33 +54,7 @@ void Control_by_lidar::run()
 #endif
 }
 
-		
-char Control_by_lidar::whereBarrier(const sensor_msgs::LaserScan::ConstPtr& msg)
-{
-	for(int i=0;i<POINT_NUM_CYCLE;i++)
-	{
-		//ROS_INFO("%f",msg->ranges[i]);
-		float angle = msg->angle_increment * (i+1);
-		
-		//printf("angle = %f\t dis= %f \r\n",angle,msg->ranges[i]);
-		
-		if(angle >0 && angle <ANGLE_BOUNDARY && 
-		   msg->ranges[i] < CAR_FRONT_SAFETY_DIS && msg->ranges[i]>0)
-		   return 1;
-		else if(angle > ANGLE_BOUNDARY && angle < PI_/2 &&
-				msg->ranges[i]<CAR_LR_SAFETY_DIS/sin(angle))
-			return 2;
-		else if(angle < 2*PI_ && angle > 2*PI_-ANGLE_BOUNDARY && 
-		   msg->ranges[i] <CAR_FRONT_SAFETY_DIS && msg->ranges[i]>0)
-		   return -1;
-		else if(angle < 2*PI_ - ANGLE_BOUNDARY && angle > 3*PI_/2 &&
-				msg->ranges[i]<CAR_LR_SAFETY_DIS/sin(2*PI_-angle))
-			return -2;
-	}
-	return 0;
-}
-
-char Control_by_lidar::target_in_scope(polar_point_t point) //目标是否在避障区域？
+char Control_by_lidar::point_in_scope(polar_point_t point) //point是否在避障区域？
 {
 	if(point.angle >=0 && point.angle <ANGLE_BOUNDARY && 
 	   point.distance < CAR_FRONT_SAFETY_DIS && point.distance>0)
@@ -97,31 +72,68 @@ char Control_by_lidar::target_in_scope(polar_point_t point) //目标是否在避
 		return 0;
 }
 
+//连接目标的起点和末点，判断线段上是否有点出现在避障区
+char Control_by_lidar::target_in_scope(targetMsg target)
+{
+	polar_point_t point;
+	//直线 rho = k*theta +b;
+	float k =(target.end_point.distance - target.start_point.distance)/(target.end_point.angle - target.start_point.angle);
+	float b = target.start_point.distance - k* target.start_point.angle;
+	for(float angle=target.start_point.angle;fabs(angle - target.end_point.angle)> PI_/360 ;angle += PI_/360)
+	{
+		if(angle >2* PI_) angle -= 2*PI_;
+		point.angle = angle;
+		point.distance= k*angle+b;
+		if(point_in_scope(point)!=0)//线段上存在一点在避障区
+		{
+			if(target.middle_point.angle>3*PI_/2)
+				return -1;
+			else
+				return  1;
+		}
+	}
+	return 0;
+}
+
+void Control_by_lidar::cal_barrier_num(void)
+{
+	barrier_num = 0;
+	for(int i=0;i<target_num;i++)
+	{
+		if(target_in_scope(target[i])!=0)
+		{
+			barrier[barrier_num] = target[i];
+			barrier_num++;
+		}
+	}
+}
+
 void Control_by_lidar::generate_control_msg(void)
 {
-	IS_Barrier =1;
-	for(int i=0;i<target_num;i++)
-	{//起点和中点都在左，右转;末点和中点都在右，左转。
-		if((target_in_scope(target[i].start_point) == -1 || //起点在左-1
-			target_in_scope(target[i].start_point) == -2) && //起点在左-2
-			(target_in_scope(target[i].middle_point) == -1 || //中点在左-1
-			target_in_scope(target[i].middle_point) == -2))  //中点在左-2
+	cal_barrier_num();
+	switch(barrier_num)
+	{
+		case 1:
+			if(barrier[0].middle_point.angle>3*PI_/2)
 			{
 				controlMsg.angular.z = -0.1/1.;  //右转 
 				controlMsg.linear.x = 0.1;
 				return;
 			}
-		else if((target_in_scope(target[i].end_point) == 1 || //末点在右1
-			target_in_scope(target[i].end_point) == 2 )&& //末点在右2
-			(target_in_scope(target[i].middle_point) == 1 || //中点在右1
-			target_in_scope(target[i].middle_point) == 2))  //中点在右2
+			else
 			{
-				controlMsg.angular.z = 0.1/1.; 
+				controlMsg.angular.z = 0.1/1.;  //zuo转 
 				controlMsg.linear.x = 0.1;
 				return;
-			}//左转
+			}
+			break;
+			
+		default :
+			break;
+		
+		
 	}
-	IS_Barrier = 0;
+
 }
 
 
@@ -172,11 +184,11 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 				new_target_flag =1; 
 				target[target_seq].start_point = now_point;
 				last_valid_point = now_point;
-				ROS_INFO("i=%d  %d--------.angle= %f",i,target_seq,now_point.angle*180/PI_);
+				//ROS_INFO("i=%d  %d--------.angle= %f",i,target_seq,now_point.angle*180/PI_);
 			}
 			else
 			{
-				ROS_INFO("last_valid_point.angle= %f",last_valid_point.angle*180/PI_);
+				//ROS_INFO("last_valid_point.angle= %f",last_valid_point.angle*180/PI_);
 				
 				float p2p_dis2 = polar_p2p_dis2(last_valid_point,now_point);
 				if(p2p_dis2 < CLUSTER_MAX_DIS*CLUSTER_MAX_DIS)
@@ -201,17 +213,17 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 															
 					target[target_seq].middle_point.distance = (target[target_seq].start_point.distance
 															+target[target_seq].end_point.distance)/2;
-					printf("%d  %f,%f\t%f,%f\t,%f,%f\r\n",target_seq,target[target_seq].start_point.angle*180/PI_,target[target_seq].start_point.distance,
-															target[target_seq].middle_point.angle*180/PI_,target[target_seq].middle_point.distance,
-															target[target_seq].end_point.angle*180/PI_,target[target_seq].end_point.distance);
+					//printf("%d  %f,%f\t%f,%f\t,%f,%f\r\n",target_seq,target[target_seq].start_point.angle*180/PI_,target[target_seq].start_point.distance,
+					//										target[target_seq].middle_point.angle*180/PI_,target[target_seq].middle_point.distance,
+					//										target[target_seq].end_point.angle*180/PI_,target[target_seq].end_point.distance);
 					target_seq ++;
 				}
 			}	
 		}
-		ROS_INFO("i = %d",i);
+		//ROS_INFO("i = %d",i);
 	}
 	target_num = target_seq;
-	ROS_INFO("out____________cycle");
+	//ROS_INFO("out____________cycle");
 }
 
 #if(SHOW_TARGET==1)

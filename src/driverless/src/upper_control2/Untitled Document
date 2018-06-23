@@ -1,0 +1,20 @@
+unsigned char barrier_num = barrier_num();
+
+switch(barrier_num)
+{
+	case 1:
+		if(target.middle_point.angle>3*PI_/2)
+		{
+			controlMsg.angular.z = -0.1/1.;  //右转 
+			controlMsg.linear.x = 0.1;
+			return;
+		}
+		else
+		{
+			controlMsg.angular.z = 0.1/1.;  //zuo转 
+			controlMsg.linear.x = 0.1;
+			return;
+		}
+		break;
+		
+}
