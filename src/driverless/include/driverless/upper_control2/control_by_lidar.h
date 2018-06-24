@@ -60,6 +60,7 @@ class Control_by_lidar
 		char target_in_scope(targetMsg target);
 		void cal_barrier_num(void);
 		void generate_control_msg(void);
+		float cal_middle_angle(float angle1 , float angle2);
 	public:
 		geometry_msgs::Twist controlMsg;
 		char IS_Barrier;

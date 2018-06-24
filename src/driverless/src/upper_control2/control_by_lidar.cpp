@@ -113,6 +113,8 @@ void Control_by_lidar::generate_control_msg(void)
 	cal_barrier_num();
 	switch(barrier_num)
 	{
+		case 0:
+			break;
 		case 1:
 			if(barrier[0].middle_point.angle>3*PI_/2)
 			{
@@ -129,9 +131,20 @@ void Control_by_lidar::generate_control_msg(void)
 			break;
 			
 		default :
+			float mid_angle = cal_middle_angle(barrier[0].start_point.angle,barrier[barrier_num-1].end_point.angle);
+			if(mid_angle >3*PI_/2)
+			{
+				controlMsg.angular.z = -0.1/1.;  //右转 
+				controlMsg.linear.x = 0.1;
+				return;			
+			}
+			else
+			{
+				controlMsg.angular.z = 0.1/1.;  //zuo转 
+				controlMsg.linear.x = 0.1;
+				return;			
+			}
 			break;
-		
-		
 	}
 
 }
@@ -152,12 +165,24 @@ float Control_by_lidar::p2p_projective_dis(polar_point_t point1,polar_point_t po
 	return point2.distance*sin(point2.angle) - point1.distance*sin(point1.angle);
 }
 
+float Control_by_lidar::cal_middle_angle(float angle1 , float angle2)
+{
+	float sum_angle=angle1 + angle2 ;
+	if(angle1>3*PI_/2 && angle1<2*PI_ && //angle1 in left
+		angle2 <PI_/2)                   //angle2 in right
+		sum_angle += 2*PI_;
+	if(sum_angle/2 >2*PI_)
+		return sum_angle/2 -2*PI_;
+	else
+		return sum_angle/2;		
+}
+
 void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	unsigned char target_seq =0;
 	new_target_flag =0;
 	
-	float mid_angle;
+	//float mid_angle;
 	memset(target,sizeof(polar_point_t)*TARGET_NUM ,0x00);//清空目标
 	//unsigned char blank_area_seq =0;
 	
@@ -199,20 +224,24 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 				{
 					new_target_flag =0;
 					target[target_seq].end_point = last_valid_point;
-					float sum_angle	= target[target_seq].start_point.angle + target[target_seq].end_point.angle;
-					mid_angle = sum_angle/2;
-					if (target[target_seq].start_point.angle > 3*PI_/2 && target[target_seq].end_point.angle <PI_/2 ) 
-					{
-						sum_angle +=2*PI_;
-						mid_angle = sum_angle/2;
-						if(mid_angle>2*PI_)
-							mid_angle-=2*PI_;
-					}
 					
-					target[target_seq].middle_point.angle = mid_angle;
+					//float sum_angle	= target[target_seq].start_point.angle + target[target_seq].end_point.angle;
+					//mid_angle = sum_angle/2;
+					//if (target[target_seq].start_point.angle > 3*PI_/2 && target[target_seq].start_point.angle < 2*PI_  //start_point in left
+					//	&& target[target_seq].end_point.angle <PI_/2 ) //end_point in right
+					//{
+					//	sum_angle +=2*PI_;
+					//	mid_angle = sum_angle/2;
+						
+					//	if(mid_angle>2*PI_) // beyond 360 degree
+					//		mid_angle-=2*PI_;
+					//}
+					
+					target[target_seq].middle_point.angle = cal_middle_angle(target[target_seq].start_point.angle , target[target_seq].end_point.angle);
 															
 					target[target_seq].middle_point.distance = (target[target_seq].start_point.distance
 															+target[target_seq].end_point.distance)/2;
+															
 					//printf("%d  %f,%f\t%f,%f\t,%f,%f\r\n",target_seq,target[target_seq].start_point.angle*180/PI_,target[target_seq].start_point.distance,
 					//										target[target_seq].middle_point.angle*180/PI_,target[target_seq].middle_point.distance,
 					//										target[target_seq].end_point.angle*180/PI_,target[target_seq].end_point.distance);
