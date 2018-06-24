@@ -28,6 +28,7 @@
  
  <node name="upper_control_node" pkg="driverless" type="upper_control2_node" output="screen">
 	<param name="linear_speed" value="0.1"/>
+	<param name="file_path" value="/home/ubuntu/projects/catkin_ws/src/driverless/data/1.txt"/>
  </node>
  
  
