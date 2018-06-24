@@ -36,7 +36,7 @@ int main(int argc,char**argv)
  		else
  		{
 	 		controlMsg = lidar.controlMsg;
-	 		ROS_INFO("barrier_num = %d",lidar.barrier_num);	
+	 		//ROS_INFO("barrier_num = %d",lidar.barrier_num);	
  		}
  	
  		

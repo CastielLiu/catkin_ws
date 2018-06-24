@@ -111,6 +111,7 @@ void Control_by_lidar::cal_barrier_num(void)
 void Control_by_lidar::generate_control_msg(void)
 {
 	cal_barrier_num();
+	//ROS_INFO("barrier_num = %d",barrier_num);
 	switch(barrier_num)
 	{
 		case 0:
@@ -190,18 +191,33 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 	{
 		now_point.angle = msg->angle_increment * (i+1) + 3*PI_/2;
 		if(now_point.angle >=2*PI_) now_point.angle -= 2*PI_;
+
+		now_point.distance = msg->ranges[i];
 		
-	//	ROS_INFO("%f",now_point.angle*180/PI_);
-		
-		if(now_point.angle>4*PI_/9 && now_point.angle<14*PI_/9 ) //只求270--360 0--90度内的障碍物
+		if((now_point.angle>4*PI_/9 && now_point.angle<14*PI_/9 )//只求270--360 0--90度内的障碍物
+			|| now_point.distance >20.0) // 防止距离为inf时点记录到障碍物内部
 		{//在270度时，距离索引值为0，即起点，当角度不在求解范围之内时，continue，但若前一时刻有为完成的目标记录，
 		//即new_target_flag=1，应将上一个有效点记录为目标末点
 			if(new_target_flag==1) 
+			{
 				target[target_seq].end_point = last_valid_point;
+//ROS_INFO("%%%%%%%%%%%% angle=%f\t distance=%f",now_point.angle*180/PI_,now_point.distance);
+				new_target_flag =0;  //!!!!
+target[target_seq].middle_point.angle = cal_middle_angle(target[target_seq].start_point.angle , target[target_seq].end_point.angle);
+															
+					target[target_seq].middle_point.distance = (target[target_seq].start_point.distance
+															+target[target_seq].end_point.distance)/2;
+printf("%d  %f,%f\t%f,%f\t,%f,%f\r\n",target_seq,target[target_seq].start_point.angle*180/PI_,
+									target[target_seq].start_point.distance,
+									target[target_seq].middle_point.angle*180/PI_,target[target_seq].middle_point.distance,
+									target[target_seq].end_point.angle*180/PI_,target[target_seq].end_point.distance);
+				target_seq ++;
+
+			}
 			continue;
 		}
-		
-		now_point.distance = msg->ranges[i];
+
+		//ROS_INFO("------angle=%f\tdis=%f -------",now_point.angle*180/PI_,now_point.distance);
 		if(now_point.distance > 0.05 && now_point.distance < TARGET_DIS_SCOPE) //valid target point 
 		{
 			if(new_target_flag==0) //a new target
@@ -209,7 +225,9 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 				new_target_flag =1; 
 				target[target_seq].start_point = now_point;
 				last_valid_point = now_point;
+				
 				//ROS_INFO("i=%d  %d--------.angle= %f",i,target_seq,now_point.angle*180/PI_);
+
 			}
 			else
 			{
@@ -242,9 +260,10 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 					target[target_seq].middle_point.distance = (target[target_seq].start_point.distance
 															+target[target_seq].end_point.distance)/2;
 															
-					//printf("%d  %f,%f\t%f,%f\t,%f,%f\r\n",target_seq,target[target_seq].start_point.angle*180/PI_,target[target_seq].start_point.distance,
-					//										target[target_seq].middle_point.angle*180/PI_,target[target_seq].middle_point.distance,
-					//										target[target_seq].end_point.angle*180/PI_,target[target_seq].end_point.distance);
+					printf("%d  %f,%f\t%f,%f\t,%f,%f\r\n",target_seq,target[target_seq].start_point.angle*180/PI_,
+														  target[target_seq].start_point.distance,
+														target[target_seq].middle_point.angle*180/PI_,target[target_seq].middle_point.distance,
+														target[target_seq].end_point.angle*180/PI_,target[target_seq].end_point.distance);
 					target_seq ++;
 				}
 			}	
@@ -285,14 +304,17 @@ void Control_by_lidar::write_marker(targetMsg * target)
 		p.x = target[i].start_point.distance * cos(target[i].start_point.angle);
 		p.y = target[i].start_point.distance * sin(target[i].start_point.angle);
 		p.z =0;
+ROS_INFO("start  x=%.2f,y=%.2f\t%.2f,%.2f",p.x,p.y,target[i].start_point.angle*180/PI_,target[i].start_point.distance);
 		marker.points.push_back(p); //start_point
 		
-		p.x = target[i].start_point.distance * cos(target[i].middle_point.angle);
-		p.y = target[i].start_point.distance * sin(target[i].middle_point.angle);	
+		p.x = target[i].middle_point.distance * cos(target[i].middle_point.angle);
+		p.y = target[i].middle_point.distance * sin(target[i].middle_point.angle);
+ROS_INFO("middle x=%.2f,y=%.2f\t%.2f,%.2f",p.x,p.y,target[i].middle_point.angle*180/PI_,target[i].middle_point.distance);	
 		marker.points.push_back(p); //mid_point
 
-		p.x = target[i].start_point.distance * cos(target[i].end_point.angle);
-		p.y = target[i].start_point.distance * sin(target[i].end_point.angle);	
+		p.x = target[i].end_point.distance * cos(target[i].end_point.angle);
+		p.y = target[i].end_point.distance * sin(target[i].end_point.angle);	
+ROS_INFO("end    x=%.2f,y=%.2f\t%.2f,%.2f",p.x,p.y,target[i].end_point.angle*180/PI_,target[i].end_point.distance);	
 		marker.points.push_back(p); //end_point
 		
 	}
