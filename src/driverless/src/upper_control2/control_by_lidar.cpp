@@ -12,18 +12,7 @@ void Control_by_lidar::callback(const sensor_msgs::LaserScan::ConstPtr& msg)
 #if(SHOW_TARGET==1)	
 	write_marker(target);
 #endif	
-	//IS_Barrier = whereBarrier(msg);
-	//ROS_INFO("IS_Barrier=%d",IS_Barrier);
-	//if(IS_Barrier<0)
-	//{
-	//	controlMsg.angular.z = -0.1/1.;  //L R=3m
-	//	controlMsg.linear.x = 0.1;
-	//}
-	//else if(IS_Barrier >0)
-	//{
-	//	controlMsg.angular.z = 0.1/1.;  //R R=3m
-	//	controlMsg.linear.x = 0.1;
-	//}
+
 }
 
 
@@ -195,7 +184,7 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 		now_point.distance = msg->ranges[i];
 		
 		if((now_point.angle>4*PI_/9 && now_point.angle<14*PI_/9 )//只求270--360 0--90度内的障碍物
-			|| now_point.distance >20.0) // 防止距离为inf时点记录到障碍物内部
+			|| now_point.distance >TARGET_DIS_SCOPE) // 防止距离为inf时点记录到障碍物内部  //Invalid point
 		{//在270度时，距离索引值为0，即起点，当角度不在求解范围之内时，continue，但若前一时刻有为完成的目标记录，
 		//即new_target_flag=1，应将上一个有效点记录为目标末点
 			if(new_target_flag==1) 
@@ -242,18 +231,6 @@ printf("%d  %f,%f\t%f,%f\t,%f,%f\r\n",target_seq,target[target_seq].start_point.
 				{
 					new_target_flag =0;
 					target[target_seq].end_point = last_valid_point;
-					
-					//float sum_angle	= target[target_seq].start_point.angle + target[target_seq].end_point.angle;
-					//mid_angle = sum_angle/2;
-					//if (target[target_seq].start_point.angle > 3*PI_/2 && target[target_seq].start_point.angle < 2*PI_  //start_point in left
-					//	&& target[target_seq].end_point.angle <PI_/2 ) //end_point in right
-					//{
-					//	sum_angle +=2*PI_;
-					//	mid_angle = sum_angle/2;
-						
-					//	if(mid_angle>2*PI_) // beyond 360 degree
-					//		mid_angle-=2*PI_;
-					//}
 					
 					target[target_seq].middle_point.angle = cal_middle_angle(target[target_seq].start_point.angle , target[target_seq].end_point.angle);
 															
