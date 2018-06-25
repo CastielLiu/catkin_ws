@@ -21,15 +21,21 @@ Control_by_lidar::Control_by_lidar()
 	IS_Barrier = 0;
 	barrier_num = 0;
 	
-	CAR_FRONT_SAFETY_DIS = 2; //m
-	CAR_LR_SAFETY_DIS = 0.45; //m
+	ELUDE_FRONT_DIS = 2; //m
+	ELUDE_LR_DIS = 0.45; //m
+	ELUDE_ANGLE_BOUNDARY = atan2(ELUDE_LR_DIS,ELUDE_FRONT_DIS);
 	
-	ANGLE_BOUNDARY = atan2(CAR_LR_SAFETY_DIS,CAR_FRONT_SAFETY_DIS);
+	STOP_FRONT_DIS =0.6;
+	STOP_LR_DIS = 0.38;
+	STOP_ANGLE_BOUNDARY = atan2(STOP_LR_DIS,STOP_FRONT_DIS);
+	
+	
+	
 	memset(target,sizeof(polar_point_t)*TARGET_NUM ,0);
 	new_target_flag =0;
 	new_blank_area_flag = 0;
 	
-	//ROS_INFO("ANGLE_BOUNDARY = %f",ANGLE_BOUNDARY);
+	//ROS_INFO("ELUDE_ANGLE_BOUNDARY = %f",ELUDE_ANGLE_BOUNDARY);
 }
 
 void Control_by_lidar::run()
@@ -43,26 +49,54 @@ void Control_by_lidar::run()
 #endif
 }
 
-char Control_by_lidar::point_in_scope(polar_point_t point) //point是否在避障区域？
-{
-	if(point.angle >=0 && point.angle <ANGLE_BOUNDARY && 
-	   point.distance < CAR_FRONT_SAFETY_DIS && point.distance>0)
-	   return 1;
-	else if(point.angle > ANGLE_BOUNDARY && point.angle < PI_/2 &&
-			point.distance<CAR_LR_SAFETY_DIS/sin(point.angle))
-		return 2;
-	else if(point.angle < 2*PI_ && point.angle > 2*PI_-ANGLE_BOUNDARY && 
-	   point.distance <CAR_FRONT_SAFETY_DIS && point.distance>0)
-	   return -1;
-	else if(point.angle < 2*PI_ - ANGLE_BOUNDARY && point.angle > 3*PI_/2 &&
-			point.distance<CAR_LR_SAFETY_DIS/sin(2*PI_-point.angle))
-		return -2;
-	else
-		return 0;
+char Control_by_lidar::point_in_scope(polar_point_t point, unsigned char area_flag) //point是否在区域？
+{//area_flag =1,避障区, area_flag=2,急停区
+	char status;
+	switch(area_flag)
+	{
+	case 1:
+		if(point.angle >=0 && point.angle <ELUDE_ANGLE_BOUNDARY && 
+		   point.distance < ELUDE_FRONT_DIS && point.distance>0)
+		   	status = 1;
+		else if(point.angle > ELUDE_ANGLE_BOUNDARY && point.angle < PI_/2 &&
+				point.distance<ELUDE_LR_DIS/sin(point.angle))
+			status = 2;
+		else if(point.angle < 2*PI_ && point.angle > 2*PI_-ELUDE_ANGLE_BOUNDARY && 
+		   point.distance <ELUDE_FRONT_DIS && point.distance>0)
+		   status = -1;
+		else if(point.angle < 2*PI_ - ELUDE_ANGLE_BOUNDARY && point.angle > 3*PI_/2 &&
+				point.distance<ELUDE_LR_DIS/sin(2*PI_-point.angle))
+			status = -2;
+		else
+			status = 0;
+		break;
+	case 2:
+		if(point.angle >=0 && point.angle <STOP_ANGLE_BOUNDARY && 
+		   point.distance < STOP_FRONT_DIS && point.distance>0)
+		   	status = 5;
+		else if(point.angle > STOP_ANGLE_BOUNDARY && point.angle < PI_/2 &&
+				point.distance<STOP_LR_DIS/sin(point.angle))
+			status = 5;
+		else if(point.angle < 2*PI_ && point.angle > 2*PI_-STOP_ANGLE_BOUNDARY && 
+		   point.distance <STOP_FRONT_DIS && point.distance>0)
+		   status = 5;
+		else if(point.angle < 2*PI_ - STOP_ANGLE_BOUNDARY && point.angle > 3*PI_/2 &&
+				point.distance<STOP_LR_DIS/sin(2*PI_-point.angle))
+			status = 5;
+		else
+			status = 0;
+		break;
+	default:
+		ROS_INFO("area_flag err!!");
+		exit(1);
+		break;
+	}
+	return status;
 }
 
-//连接目标的起点和末点，判断线段上是否有点出现在避障区
-char Control_by_lidar::target_in_scope(targetMsg target)
+//连接目标的起点和末点，判断线段上是否有点出现在区
+//area_flag =1,避障区, area_flag=2,急停区
+char Control_by_lidar::target_in_scope(targetMsg target,unsigned char area_flag)
 {
 	polar_point_t point;
 	//直线 rho = k*theta +b;
@@ -73,7 +107,7 @@ char Control_by_lidar::target_in_scope(targetMsg target)
 		if(angle >2* PI_) angle -= 2*PI_;
 		point.angle = angle;
 		point.distance= k*angle+b;
-		if(point_in_scope(point)!=0)//线段上存在一点在避障区
+		if(point_in_scope(point,area_flag)!=0)//线段上存在一点在区
 		{
 			if(target.middle_point.angle>3*PI_/2)
 				return -1;
@@ -89,12 +123,22 @@ void Control_by_lidar::cal_barrier_num(void)
 	barrier_num = 0;
 	for(int i=0;i<target_num;i++)
 	{
-		if(target_in_scope(target[i])!=0)
+		if(target_in_scope(target[i],1)!=0)//避障区
 		{
 			barrier[barrier_num] = target[i];
 			barrier_num++;
 		}
 	}
+}
+
+unsigned char Control_by_lidar::emergency_stop(void)
+{
+	for(int i=0;i<barrier_num;i++)
+	{
+		if(target_in_scope(barrier[i],2)!=0) //紧急停车区
+			return 1;
+	}
+	return 0;
 }
 
 void Control_by_lidar::generate_control_msg(void)
@@ -103,9 +147,9 @@ void Control_by_lidar::generate_control_msg(void)
 	//ROS_INFO("barrier_num = %d",barrier_num);
 	switch(barrier_num)
 	{
-		case 0:
+		case 0: // 没有障碍物
 			break;
-		case 1:
+		case 1: //1个障碍物
 			if(barrier[0].middle_point.angle>3*PI_/2)
 			{
 				controlMsg.angular.z = -0.1/1.;  //右转 
@@ -120,7 +164,7 @@ void Control_by_lidar::generate_control_msg(void)
 			}
 			break;
 			
-		default :
+		default : //多个障碍物
 			float mid_angle = cal_middle_angle(barrier[0].start_point.angle,barrier[barrier_num-1].end_point.angle);
 			if(mid_angle >3*PI_/2)
 			{
@@ -136,7 +180,11 @@ void Control_by_lidar::generate_control_msg(void)
 			}
 			break;
 	}
-
+	if(emergency_stop()==1) //是否需要紧急停车
+	{
+	 		controlMsg.angular.z = 0; 
+			controlMsg.linear.x = 0.0;		
+	}
 }
 
 

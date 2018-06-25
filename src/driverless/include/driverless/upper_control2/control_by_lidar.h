@@ -34,9 +34,15 @@ class Control_by_lidar
 	private:
 		void callback(const sensor_msgs::LaserScan::ConstPtr& msg);
 		ros::Subscriber lidar_sub;
-		float CAR_FRONT_SAFETY_DIS;
-		float CAR_LR_SAFETY_DIS;
-		float ANGLE_BOUNDARY;
+		//避障常量
+		float ELUDE_FRONT_DIS;
+		float ELUDE_LR_DIS;
+		float ELUDE_ANGLE_BOUNDARY;
+		//急停常量
+		float STOP_FRONT_DIS;
+		float STOP_LR_DIS;
+		float STOP_ANGLE_BOUNDARY;
+		
 		targetMsg target[TARGET_NUM]; 
 		targetMsg barrier[TARGET_NUM]; 
 		targetMsg blank_area[BLANK_AREA_NUM];
@@ -56,11 +62,13 @@ class Control_by_lidar
 		float polar_p2p_dis2(polar_point_t point1,polar_point_t point2);
 		void create_target(const sensor_msgs::LaserScan::ConstPtr& msg);
 		float p2p_projective_dis(polar_point_t point1,polar_point_t point2);
-		char point_in_scope(polar_point_t point);
-		char target_in_scope(targetMsg target);
+		//area_flag =1,避障区, area_flag=2,急停区
+		char point_in_scope(polar_point_t point ,unsigned char area_flag);
+		char target_in_scope(targetMsg target,unsigned char area_flag);
 		void cal_barrier_num(void);
 		void generate_control_msg(void);
 		float cal_middle_angle(float angle1 , float angle2);
+		unsigned char emergency_stop(void);
 	public:
 		geometry_msgs::Twist controlMsg;
 		char IS_Barrier;

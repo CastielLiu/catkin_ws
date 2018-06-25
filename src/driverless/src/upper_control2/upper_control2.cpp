@@ -26,11 +26,12 @@ int main(int argc,char**argv)
  	
  	while(ros::ok())
  	{
+
  		if(lidar.barrier_num ==0)
  		{
  			//controlMsg = gps.controlMsg;
  			controlMsg.angular.z = 0; 
-			controlMsg.linear.x = 0.;
+			controlMsg.linear.x = 0.1;
  		}
  			
  		else
@@ -38,6 +39,7 @@ int main(int argc,char**argv)
 	 		controlMsg = lidar.controlMsg;
 	 		//ROS_INFO("barrier_num = %d",lidar.barrier_num);	
  		}
+
  	
  		
  		control_pub.publish(controlMsg);
