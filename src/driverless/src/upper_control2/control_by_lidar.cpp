@@ -4,6 +4,9 @@
 #define PI_ 3.141592653589
 #endif
 
+#define SPEEP 0.3
+#define RADIUS 1.2
+
 void Control_by_lidar::callback(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	create_target(msg);
@@ -23,12 +26,12 @@ Control_by_lidar::Control_by_lidar()
 	multil_barrier_flag =0;
 	turning_flag =0;
 	
-	ELUDE_FRONT_DIS = 2; //m
-	ELUDE_LR_DIS = 0.45; //m
+	ELUDE_FRONT_DIS = 2.5; //m
+	ELUDE_LR_DIS = 0.50; //m
 	ELUDE_ANGLE_BOUNDARY = atan2(ELUDE_LR_DIS,ELUDE_FRONT_DIS);
 	
-	STOP_FRONT_DIS =0.6;
-	STOP_LR_DIS = 0.38;
+	STOP_FRONT_DIS =0.5;
+	STOP_LR_DIS = 0.36;
 	STOP_ANGLE_BOUNDARY = atan2(STOP_LR_DIS,STOP_FRONT_DIS);
 	
 	
@@ -152,6 +155,7 @@ void Control_by_lidar::generate_control_msg(void)
 	{
  		controlMsg.angular.z = 0; 
 		controlMsg.linear.x = 0.0;
+ROS_INFO("emergency stop!!!");
 		return ;		
 	}
 
@@ -183,27 +187,39 @@ void Control_by_lidar::generate_control_msg(void)
 			break;
 			
 		default : //多个障碍物
-			multil_barrier_flag = 1;
-			float mid_angle = cal_middle_angle(barrier[0].start_point.angle,barrier[barrier_num-1].end_point.angle);
-			if(mid_angle >3*PI_/2)
+			if(multil_barrier_flag==0)
 			{
-				turning_flag =1	;
+				float mid_angle = cal_middle_angle(barrier[0].start_point.angle,barrier[barrier_num-1].end_point.angle);
+				if(mid_angle >3*PI_/2)
+				{
+					turning_flag =1	;
+				}
+				else
+				{
+					turning_flag =-1;	
+				}
+				multil_barrier_flag = 1;
 			}
-			else
-			{
-				turning_flag =-1;	
+			else//上一时刻为多障碍物,不作出任何动作，维持之前的转向角
+			{//上一时右转 且当前障碍物中点在左侧 
+				if(turning_flag = 1 &&barrier[barrier_num-1].middle_point.angle>3*PI_/2)
+					multil_barrier_flag =0;
+				//上一时左转 且当前障碍物中点在右侧 
+				else if(turning_flag = -1 && barrier[0].middle_point.angle<PI_/2)
+					multil_barrier_flag =0;
 			}
+
 			break;
 	}
 	if(turning_flag==1)
 	{
-		controlMsg.angular.z = -0.1/1.;  //右转 
-		controlMsg.linear.x = 0.1;	
+		controlMsg.angular.z = -SPEEP/RADIUS;  //右转 
+		controlMsg.linear.x = SPEEP;	
 	}
 	else if(turning_flag==-1)
 	{
-		controlMsg.angular.z = 0.1/1.;  //left转 
-		controlMsg.linear.x = 0.1;
+		controlMsg.angular.z = SPEEP/RADIUS;  //left转 
+		controlMsg.linear.x = SPEEP;
 	}
 }
 

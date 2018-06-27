@@ -31,7 +31,7 @@ int main(int argc,char**argv)
  		{
  			//controlMsg = gps.controlMsg;
  			controlMsg.angular.z = 0; 
-			controlMsg.linear.x = 0.1;
+			controlMsg.linear.x = 0.3;
  		}
  			
  		else

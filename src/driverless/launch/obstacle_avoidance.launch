@@ -2,14 +2,14 @@
 <launch>
 
   <node pkg="driverless"  type="lidar_node" name="lidar_node">
-    <param name="dev_path"         type="string" 	value="/dev/ttyUSB1"/>
+    <param name="dev_path"         type="string" 	value="/dev/ttyUSB0"/>
     <param name="frame_id"            type="string" value="/lidar_frame"/>
     <param name="scan_topic"            type="string"   value="/scan"/>
   </node>
   
   <node name="lower_control_node" pkg="driverless" type="lower_control_node">
 
-    <param name="port_name" value="/dev/ttyUSB0" />
+    <param name="port_name" value="/dev/ttyUSB1" />
     <param name="odom_frame" value="odom" />
     <param name="base_frame" value="base_link"/>
 
