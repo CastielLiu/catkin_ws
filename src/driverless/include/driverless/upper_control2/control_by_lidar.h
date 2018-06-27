@@ -51,6 +51,9 @@ class Control_by_lidar
 		unsigned char new_blank_area_flag;
 		unsigned char target_num;//存放真实目标数
 		
+		unsigned char multil_barrier_flag;
+		char turning_flag;//left - right + else 0;
+		
 		
 		polar_point_t last_valid_point;
 		polar_point_t now_point;

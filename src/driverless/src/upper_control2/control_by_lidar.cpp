@@ -20,6 +20,8 @@ Control_by_lidar::Control_by_lidar()
 {
 	IS_Barrier = 0;
 	barrier_num = 0;
+	multil_barrier_flag =0;
+	turning_flag =0;
 	
 	ELUDE_FRONT_DIS = 2; //m
 	ELUDE_LR_DIS = 0.45; //m
@@ -144,6 +146,7 @@ unsigned char Control_by_lidar::emergency_stop(void)
 void Control_by_lidar::generate_control_msg(void)
 {
 	cal_barrier_num();
+	//multil_barrier_flag =0;//reset
 	//ROS_INFO("barrier_num = %d",barrier_num);
 	if(emergency_stop()==1) //是否需要紧急停车
 	{
@@ -155,37 +158,52 @@ void Control_by_lidar::generate_control_msg(void)
 	switch(barrier_num)
 	{
 		case 0: // 没有障碍物
+			turning_flag =0;
 			break;
 		case 1: //1个障碍物
-			if(barrier[0].middle_point.angle>3*PI_/2)
+			if(multil_barrier_flag==0)
 			{
-				controlMsg.angular.z = -0.1/1.;  //右转 
-				controlMsg.linear.x = 0.1;
-				return;
+				if(barrier[0].middle_point.angle>3*PI_/2)
+				{
+					turning_flag = 1;
+				}
+				else
+				{
+					turning_flag =-1;
+				}
 			}
-			else
-			{
-				controlMsg.angular.z = 0.1/1.;  //zuo转 
-				controlMsg.linear.x = 0.1;
-				return;
+			else//上一时刻为多障碍物,不作出任何动作，维持之前的转向角
+			{//上一时右转 且当前障碍物中点在左侧 
+				if(turning_flag = 1 &&barrier[0].middle_point.angle>3*PI_/2)
+					multil_barrier_flag =0;
+				//上一时左转 且当前障碍物中点在右侧 
+				else if(turning_flag = -1 && barrier[0].middle_point.angle<PI_/2)
+					multil_barrier_flag =0;
 			}
 			break;
 			
 		default : //多个障碍物
+			multil_barrier_flag = 1;
 			float mid_angle = cal_middle_angle(barrier[0].start_point.angle,barrier[barrier_num-1].end_point.angle);
 			if(mid_angle >3*PI_/2)
 			{
-				controlMsg.angular.z = -0.1/1.;  //右转 
-				controlMsg.linear.x = 0.1;
-				return;			
+				turning_flag =1	;
 			}
 			else
 			{
-				controlMsg.angular.z = 0.1/1.;  //zuo转 
-				controlMsg.linear.x = 0.1;
-				return;			
+				turning_flag =-1;	
 			}
 			break;
+	}
+	if(turning_flag==1)
+	{
+		controlMsg.angular.z = -0.1/1.;  //右转 
+		controlMsg.linear.x = 0.1;	
+	}
+	else if(turning_flag==-1)
+	{
+		controlMsg.angular.z = 0.1/1.;  //left转 
+		controlMsg.linear.x = 0.1;
 	}
 }
 
