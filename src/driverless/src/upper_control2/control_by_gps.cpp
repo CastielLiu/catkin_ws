@@ -12,7 +12,7 @@ void Control_by_gps::run()
 	private_nh.param<float>("angular_speed_pid_Kp",angular_speed_pid.Kp,0.0);
 	private_nh.param<float>("angular_speed_pid_Ki",angular_speed_pid.Ki,0.0);
 	private_nh.param<float>("angular_speed_pid_Kd",angular_speed_pid.Kd,0.0);
-	private_nh.param<std::string>("file_path",file_path,std::string("/home/wendao/projects/catkin_ws/src/driverless/data/1.txt"));
+	private_nh.param<std::string>("file_path",file_path,std::string("//home/ubuntu/projects/catkin_ws/src/driverless/data/1.txt"));
 	
 	fp = fopen(file_path.c_str(),"r");
 	if(fp==NULL) 
@@ -71,7 +71,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 		if(feof(fp))
 		{
 			ROS_INFO("finish ......");
-			ros::shutdown();
+			//ros::shutdown();
 			exit(0);
 		}
 		fscanf(fp,"%lf,%lf\n",&target_location.lon,&target_location.lat); //read a new target point

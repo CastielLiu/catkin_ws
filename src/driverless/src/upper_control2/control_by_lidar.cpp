@@ -26,6 +26,7 @@ Control_by_lidar::Control_by_lidar()
 	barrier_num = 0;
 	multil_barrier_flag =0;
 	turning_flag =0;
+	category_num =0;
 	
 	ELUDE_FRONT_DIS = 2.5; //m
 	ELUDE_LR_DIS = 0.50; //m
@@ -379,11 +380,11 @@ void Control_by_lidar::write_marker(targetMsg * target)
 
 void Control_by_lidar::k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
+	int temp_cnt =0;
 	for(int i=0;i<category_num;i++)
 	{
 		category[i].clear();
 	}
-	
 	for(int i=0;i<POINT_NUM_CYCLE/2;i++)
 	{
 		scan_point[i].angle = msg->angle_increment * (i+1) + 3*PI_/2;
@@ -399,21 +400,29 @@ void Control_by_lidar::k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& m
 		
 		for(int j=i;j<POINT_NUM_CYCLE/2;j++)
 		{
-			if(polar_p2p_dis2(scan_point[i],scan_point[j])<CLUSTER_MAX_DIS) //the distance of point i and point j
+			if(scan_point[j].distance>TARGET_DIS_SCOPE) continue;
+
+			float dis2 =  polar_p2p_dis2(scan_point[i],scan_point[j]);
+			//ROS_INFO("%d,%d,%f",i,j,dis2);
+			if(dis2<CLUSTER_MAX_DIS*CLUSTER_MAX_DIS) //the distance of point i and point j
 			{
 				category[target_seq].push_back(scan_point[j]);
 				near_point_num ++;
-				i = j-1; //temp_cnt will record the end valid point seq
+				temp_cnt = j-1; //temp_cnt will record the end valid point seq
+				//ROS_INFO("target_seq = %d",target_seq);
 			}	
 		}
+		i = temp_cnt;
+
 		if(near_point_num==1) 
 		{
 			target_seq++;
 			category_num = target_seq;
+			i++;//此句不可缺少，否则将一直处于边缘点，自己与自己做比较，满足要求，下一点不满足，near_point_num将一直为1；=直到数组溢出程序中止
 		}
 
 	}
-	ROS_INFO("category_num=%d",category_num);
+	
 		
 		
 }

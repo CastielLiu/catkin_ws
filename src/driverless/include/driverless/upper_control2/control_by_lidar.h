@@ -48,7 +48,7 @@ class Control_by_lidar
 		targetMsg barrier[TARGET_NUM]; 
 		targetMsg blank_area[BLANK_AREA_NUM];
 		
-		std::vector<polar_point_t>category[30]; //cluster
+		std::vector<polar_point_t>category[100]; //cluster
 		unsigned char category_num;
 		polar_point_t scan_point[POINT_NUM_CYCLE/2]; // point
 		
