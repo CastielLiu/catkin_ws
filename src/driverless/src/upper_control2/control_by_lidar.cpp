@@ -378,8 +378,10 @@ void Control_by_lidar::write_marker(targetMsg * target)
 
 void Control_by_lidar::k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
-	int temp_cnt=0;
-	
+	for(int i=0;i<category_num;i++)
+	{
+		category[i].clear();
+	}
 	
 	for(int i=0;i<POINT_NUM_CYCLE/2;i++)
 	{
@@ -388,24 +390,27 @@ void Control_by_lidar::k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& m
 		scan_point[i].distance = msg->ranges[i];
 	}
 	
-	for(int i=0,int target_seq =0;i<POINT_NUM_CYCLE/2;i++)
+	for(int i=0,target_seq =0;i<POINT_NUM_CYCLE/2;i++)
 	{
 		int near_point_num =0;
-		if(scan_point.distance>TARGET_DIS_SCOPE) continue;
-		category[target_seq].push_back(scan_point[i]); //the first point of target
+		if(scan_point[i].distance>TARGET_DIS_SCOPE) continue;
 		
-		for(int j=i+1;j<POINT_NUM_CYCLE/2;j++)
+		
+		for(int j=i;j<POINT_NUM_CYCLE/2;j++)
 		{
 			if(polar_p2p_dis2(scan_point[i],scan_point[j])<CLUSTER_MAX_DIS) //the distance of point i and point j
 			{
 				category[target_seq].push_back(scan_point[j]);
 				near_point_num ++;
-				temp_cnt = j; //temp_cnt will record the end valid point seq
+				i = j-1; //temp_cnt will record the end valid point seq
 			}	
 		}
-		if(near_point_num==0) target_seq++;
-		i = temp_cnt;
-		
+		if(near_point_num==1) 
+		{
+			target_seq++;
+			category_num = target_seq;
+		}
+
 	}
 		
 		

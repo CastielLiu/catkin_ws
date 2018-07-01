@@ -4,6 +4,7 @@
 #include <sensor_msgs/LaserScan.h>
 #include<geometry_msgs/Twist.h>
 #include<visualization_msgs/Marker.h>
+#include<vector>
 
 #include<iostream>
 #define TARGET_NUM 30
@@ -47,8 +48,9 @@ class Control_by_lidar
 		targetMsg barrier[TARGET_NUM]; 
 		targetMsg blank_area[BLANK_AREA_NUM];
 		
-		vector<polar_point_t>category[30]; //cluster
-		polar_point_t scan_point[polar_point_t/2]; // point
+		std::vector<polar_point_t>category[30]; //cluster
+		unsigned char category_num;
+		polar_point_t scan_point[POINT_NUM_CYCLE/2]; // point
 		
 		unsigned char new_target_flag;
 		unsigned char new_blank_area_flag;

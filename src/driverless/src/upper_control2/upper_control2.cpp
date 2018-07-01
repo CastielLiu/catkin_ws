@@ -32,7 +32,7 @@ int main(int argc,char**argv)
  	
  	while(ros::ok())
  	{
-		if(open_evade ==1 && lidar,barrier_num !=0)
+		if(open_evade ==1 && lidar.barrier_num !=0)
 		{
 			controlMsg = lidar.controlMsg;
 		}
