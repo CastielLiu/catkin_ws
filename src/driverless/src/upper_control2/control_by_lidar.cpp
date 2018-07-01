@@ -9,11 +9,12 @@
 
 void Control_by_lidar::callback(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
-	create_target(msg);
-	generate_control_msg();
+	//create_target(msg);
+	//generate_control_msg();
+	k_means_cluster(msg);
 	
 #if(SHOW_TARGET==1)	
-	write_marker(target);
+	//write_marker(target);
 #endif	
 
 }
@@ -412,6 +413,7 @@ void Control_by_lidar::k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& m
 		}
 
 	}
+	ROS_INFO("category_num=%d",category_num);
 		
 		
 }
