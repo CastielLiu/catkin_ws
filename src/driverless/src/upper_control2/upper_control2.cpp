@@ -8,9 +8,15 @@ int main(int argc,char**argv)
 	
 	ros::NodeHandle nh;
 	
+	ros::NodeHandle private_nh("~");
+	
 	ros::Publisher control_pub;
 	
 	control_pub= nh.advertise<geometry_msgs::Twist>("/cmd_vel",10);
+	
+	bool open_evade;
+	
+	private_nh.param<bool>("open_evade",open_evade,0);
 	
 	geometry_msgs::Twist controlMsg;
 	
@@ -26,22 +32,19 @@ int main(int argc,char**argv)
  	
  	while(ros::ok())
  	{
+		if(open_evade ==1 && lidar,barrier_num !=0)
+		{
+			controlMsg = lidar.controlMsg;
+		}
+		else
+		{
+			controlMsg = gps.controlMsg;
+ 			//controlMsg.angular.z = 0; 
+			//controlMsg.linear.x = 0.3;
+		}
 
- 		if(lidar.barrier_num ==0)
- 		{
- 			//controlMsg = gps.controlMsg;
- 			controlMsg.angular.z = 0; 
-			controlMsg.linear.x = 0.3;
- 		}
- 			
- 		else
- 		{
-	 		controlMsg = lidar.controlMsg;
-	 		ROS_INFO("barrier_num = %d",lidar.barrier_num);	
- 		}
+	 	//ROS_INFO("barrier_num = %d",lidar.barrier_num);	
 
- 	
- 		
  		control_pub.publish(controlMsg);
  		
  		ros::spinOnce();

@@ -149,8 +149,7 @@ unsigned char Control_by_lidar::emergency_stop(void)
 void Control_by_lidar::generate_control_msg(void)
 {
 	cal_barrier_num();
-	//multil_barrier_flag =0;//reset
-	//ROS_INFO("barrier_num = %d",barrier_num);
+
 	if(emergency_stop()==1) //是否需要紧急停车
 	{
  		controlMsg.angular.z = 0; 
@@ -255,8 +254,6 @@ void Control_by_lidar::create_target(const sensor_msgs::LaserScan::ConstPtr& msg
 {
 	unsigned char target_seq =0;
 	new_target_flag =0;
-	
-	//float mid_angle;
 	memset(target,sizeof(polar_point_t)*TARGET_NUM ,0x00);//清空目标
 	//unsigned char blank_area_seq =0;
 	

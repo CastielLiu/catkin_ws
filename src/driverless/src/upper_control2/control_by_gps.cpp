@@ -71,6 +71,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 		if(feof(fp))
 		{
 			ROS_INFO("finish ......");
+			ros::shutdown();
 			exit(0);
 		}
 		fscanf(fp,"%lf,%lf\n",&target_location.lon,&target_location.lat); //read a new target point
