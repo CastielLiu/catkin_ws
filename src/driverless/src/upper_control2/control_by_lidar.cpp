@@ -120,19 +120,34 @@ char Control_by_lidar::target_in_scope(targetMsg target,unsigned char area_flag)
 				return -1;
 			else
 				return  1;
+				
+				
 		}
 	}
 	return 0;
 }
 
+char Control_by_lidar::category_in_scope(std::vector<polar_point_t> category_)
+{
+	for(int i=0;i<category_.capacity();i++)
+	{
+		if(point_in_scope(category_[i],1)!=0)//避障区
+		{
+			return  1;
+		}
+		
+	}
+	
+}
+
 void Control_by_lidar::cal_barrier_num(void)
 {
 	barrier_num = 0;
-	for(int i=0;i<target_num;i++)
+	for(int i=0;i<category_num;i++)
 	{
-		if(target_in_scope(target[i],1)!=0)//避障区
+		if(category_in_scope(category[i])!=0)//避障区
 		{
-			barrier[barrier_num] = target[i];
+			//barrier[barrier_num] = target[i];
 			barrier_num++;
 		}
 	}

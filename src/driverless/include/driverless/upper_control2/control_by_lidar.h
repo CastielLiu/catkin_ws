@@ -48,7 +48,7 @@ class Control_by_lidar
 		targetMsg barrier[TARGET_NUM]; 
 		targetMsg blank_area[BLANK_AREA_NUM];
 		
-		std::vector<polar_point_t>category[100]; //cluster
+		std::vector<polar_point_t>category[30]; //cluster
 		unsigned char category_num;
 		polar_point_t scan_point[POINT_NUM_CYCLE/2]; // point
 		
@@ -78,6 +78,7 @@ class Control_by_lidar
 		float cal_middle_angle(float angle1 , float angle2);
 		unsigned char emergency_stop(void);
 		void k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& msg);
+		char category_in_scope(std::vector<polar_point_t> category_);
 	public:
 		geometry_msgs::Twist controlMsg;
 		char IS_Barrier;
