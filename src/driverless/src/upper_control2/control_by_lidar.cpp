@@ -396,7 +396,8 @@ void Control_by_lidar::write_marker(targetMsg * target)
 void Control_by_lidar::k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& msg)
 {
 	int temp_cnt =0;
-	for(int i=0;i<category_num;i++)
+	// 清空每一个类的成员，第一次运行时catgory_num =0
+	for(int i=0;i<category_num;i++) 
 	{
 		category[i].clear();
 	}
@@ -423,11 +424,11 @@ void Control_by_lidar::k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& m
 			{
 				category[target_seq].push_back(scan_point[j]);
 				near_point_num ++;
-				temp_cnt = j-1; //temp_cnt will record the end valid point seq
+				temp_cnt = j; //temp_cnt will record the end valid point seq
 				//ROS_INFO("target_seq = %d",target_seq);
 			}	
 		}
-		i = temp_cnt;
+		i = temp_cnt-1;
 
 		if(near_point_num==1) 
 		{
@@ -438,6 +439,19 @@ void Control_by_lidar::k_means_cluster(const sensor_msgs::LaserScan::ConstPtr& m
 
 	}
 	
+	FILE *fp;
+	fp = fopen("/home/wendao/a.txt","a");
+	for(int i=0;i<category_num;i++)
+	{
+		fprintf(fp,"category_seq = %d\r\n",i);
+		for(int j=0;j<category[i].capacity();j++)
+		{
+			fprintf(fp,"%f\t%f\r\n",category[i][j].angle,category[i][j].distance);
+		}
+		
+		fprintf(fp,"\r\n");
+	}
+	fclose(fp);
 		
 		
 }
