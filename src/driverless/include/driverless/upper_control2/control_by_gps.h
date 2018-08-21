@@ -36,6 +36,7 @@ class Control_by_gps
 		ros::Subscriber gps_sub ;
 		
 		FILE *fp;
+		FILE *debug_fp;
 		std::string file_path;
 		double t_yaw_start,t_yaw_now;
 		float dis2end;
