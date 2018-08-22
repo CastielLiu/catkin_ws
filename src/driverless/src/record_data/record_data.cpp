@@ -9,6 +9,7 @@ class Record
 {
 	private:
 		void gps_callback(const driverless::Gps& gpsMsg);
+		std::string file_path;
 		FILE *fp;
 		driverless::Gps last_point;
 		float sample_distance;
@@ -35,10 +36,14 @@ void Record:: run()
 	ros::NodeHandle nh;
 	ros::NodeHandle private_nh("~");
 	ros::Subscriber gps_sub;
-	fp = fopen("/home/wendao/projects/catkin_ws/src/driverless/data/gps.txt","w");
+	
+	private_nh.param<std::string>("file_path",file_path,"/home/wendao/projects/catkin_ws/src/driverless/data/gps.txt");
+	
+	fp = fopen(file_path.c_str(),"w");
+	
 	if(fp == NULL)
 	{
-		ROS_INFO("open record data failed !!!!!");
+		ROS_INFO("open record data file failed !!!!!");
 		return ;
 	}
 	

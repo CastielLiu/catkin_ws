@@ -21,12 +21,13 @@ int main(int argc,char**argv)
 	geometry_msgs::Twist controlMsg;
 	
 	Control_by_gps gps;
-	
 	Control_by_lidar lidar;
- 	
- 	gps.run();
- 	
- 	lidar.run();
+	gps.run();
+	
+	if(open_evade ==1)
+	{
+ 		lidar.run();
+	}
  	
  	ros::Rate rate(20);
  	

@@ -15,7 +15,12 @@ void Control_by_gps::run()
 	private_nh.param<std::string>("file_path",file_path,std::string("/home/ubuntu/projects/catkin_ws/src/driverless/data/1.txt"));
 	
 	fp = fopen(file_path.c_str(),"r");
-	debug_fp = fopen("/home/wendao/projects/catkin_ws/src/driverless/data/debug.txt","w"); //use to record debug msg
+	debug_fp = fopen("/home/ubuntu/projects/catkin_ws/src/driverless/data/debug.txt","w"); //use to record debug msg
+	if(debug_fp == NULL)
+	{
+		ROS_INFO("open %s failed !!!","debug.txt");
+		exit(0);
+	}
 	if(fp==NULL) 
 	{
 		ROS_INFO("open %s failed !!!",file_path.c_str());
@@ -65,8 +70,8 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 
 	static float steer_radius[2];
 	static unsigned char i=0;
-	if(i<10) i++;
-	
+	if(i<10) i++; 
+
 	now_location.lon = gps_msg->lon;
 	now_location.lat = gps_msg->lat; 
 	now_location.yaw = gps_msg->yaw; 
@@ -80,12 +85,14 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 			//ros::shutdown();
 			exit(0);
 		}
-		fscanf(fp,"%lf,%lf\n",&target_location.lon,&target_location.lat); //read a new target point
+		fscanf(fp,"%lf\t%lf\n",&target_location.lon,&target_location.lat); //read a new target point
 		
 		arrive_target_flag =0;  
 	}
-	
+	ROS_INFO("A_lon=%f\tA_lat=%f\tB_lon=%f\tB_lat=%f\r\n",now_location.lon,now_location.lat,target_location.lon,target_location.lat);
 	relative_X_Y_dis_yaw(now_location,target_location,&rectangular,1); //当前点与目标点的相对信息
+	
+	
 	
 	t_yaw_now = rectangular.t_yaw ;
 	
@@ -101,7 +108,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	
 	steer_radius[1] = 0.5*dis2end/sin(yaw_err*PI_/180) ; //modify DisThreshold -> dis2end
 	fprintf(debug_fp,"%f\r\n",steer_radius[1]);
-	
+	ROS_INFO("t_yaw=%f\tyaw=%f\terr=%f\tdis2end=%f\r\n",t_yaw_now,now_location.yaw,yaw_err,dis2end);
 	float test_threshold = 1.0;
 	
 	if(i>5)//not the first time in the function  
@@ -114,7 +121,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 		
 
 	if(fabs(steer_radius[1]) < RadiusThreshold)
-		linear_speed = 0.2;//转弯半径太小， 降低速度 
+		linear_speed = 0.5;//转弯半径太小， 降低速度 
 	else
 		linear_speed = linear_speed_temp_buf;
 		
@@ -127,7 +134,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	
 	//printf("dis2end = %f  lateral_err=%f turning_radius=%f\r\n\r\n",dis2end,lateral_err,turning_radius);
 	//printf("gps_yaw=%f  dis2end=%f\n\r\n",gps_msg->yaw,dis2end);
-	//printf("cal_speed = %f   cal_yaw =%f\n",speed,cal_yaw);
+	//printf("hhhhh\n");
 	
 	controlMsg.angular.z = angular_speed;   
 	controlMsg.linear.x = linear_speed;

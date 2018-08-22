@@ -1,9 +1,9 @@
 <!-- -->
 
 <launch>
-	<arg name ="gps_port"     default = "/dev/ttyUSB0"/>
+	<arg name ="gps_port"     default = "/dev/ttyUSB1"/>
 	<arg name ="lidar_port"   default = "/dev/ttyUSB2"/>
-	<arg name ="control_port" default = "/dev/ttyUSB1"/>
+	<arg name ="control_port" default = "/dev/ttyUSB0"/>
 	<arg name ="scan_topic"   default = "/scan"/>
 	
 	
@@ -28,7 +28,7 @@
     
    
     <node name="upper_control_node" pkg="driverless" type="upper_control2_node" output="screen">
-    	<param name="open_evade" value="1"/>
+    	<param name="open_evade" value="0"/>
     
     	<param name="linear_speed" value="0.5"/>
     	<param name="angular_speed_pid_Kp" value="-0.08"/>
@@ -40,7 +40,6 @@
     	<param name="file_path" value="$(find driverless)/data/1.txt"/>
     	
     	
-    	
     </node>
     
     <!--node name="car_status_node" pkg="driverless" type="car_status_node" output="screen" /--> 
@@ -49,6 +48,13 @@
    	 <node name="gps_node" pkg="driverless" type="gps_node">
    	 	<param name="gps_port_name" type="string"  value = "$(arg gps_port)" />
    	 </node>
+ 
+ 	<node name="record_data_node" pkg ="driverless" type="record_data_node" >
+		<param name="sample_dis" value="0.1"/>
+		<param name="file_path" value="$(find driverless)/data/tracking_effect.txt"/>
+	</node>
+	
+	<!--
  
     <group ns="lidar">
 	  <node pkg="driverless"  type="lidar_node" name="lidar_node" >
@@ -60,7 +66,7 @@
 		<param name="scan_topic"            type="string"   value="$(arg scan_topic)"/>
 	  </node>
     </group>
- 
+ -->
     
     
 </launch>
