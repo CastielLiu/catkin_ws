@@ -101,14 +101,15 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 		
 		current_segment_seq = 1; //刚更新了目标序列，因此新目标跟踪子片段序列为1
 		
+		if(current_target_seq == 1) //当前目标序列为1，表明上一个目标为目标序列的最后一个
+			last_target_point = Arr_target_point[total_target_num-1];
+		else
+			last_target_point = current_target_point;
+			
 		current_target_point = Arr_target_point[current_target_seq - 1];
 		
 		//ROS_INFO("current_target_point=%f\t%f",current_target_point.lat,current_target_point.lon);
 		
-		if(current_target_seq == 1) //当前目标序列为1，表明上一个目标为目标序列的最后一个
-			last_target_point = Arr_target_point[total_target_num-1];
-		else
-			last_target_point = Arr_target_point[current_target_seq-1];
 			
 		dis_between_2_target = relative_dis_yaw(current_target_point,last_target_point,CAL_DIS); //the distance between two target
 		
@@ -131,7 +132,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	now_location.yaw = gps_msg->yaw; 
 	
 	
-	ROS_INFO("A_lon=%f\tA_lat=%f\tB_lon=%f\tB_lat=%f\r\n",now_location.lon,now_location.lat,last_target_point.lon,last_target_point.lat);
+	//ROS_INFO("A_lon=%f\tA_lat=%f\tB_lon=%f\tB_lat=%f\r\n",now_location.lon,now_location.lat,last_target_point.lon,last_target_point.lat);
 	
 	dis2tracking_point = relative_dis_yaw(now_location,current_track_point,CAL_DIS);  //计算当前点到当前跟踪点的距离
 	

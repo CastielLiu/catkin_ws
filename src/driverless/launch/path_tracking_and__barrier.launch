@@ -30,14 +30,14 @@
     <node name="upper_control_node" pkg="driverless" type="upper_control2_node" output="screen">
     	<param name="open_evade" value="0"/>
     
-    	<param name="linear_speed" value="0.5"/>
+    	<param name="linear_speed" value="1.0"/>
     	<param name="angular_speed_pid_Kp" value="-0.08"/>
     	<param name="angular_speed_pid_Ki" value="-0.000005"/>
     	<param name="angular_speed_pid_Kd" value="-0.08"/>  
     	  	    	
     	<param name="DisThreshold" value="2."/>
     	<param name="RadiusThreshold" value="3."/>
-    	<param name="file_path" value="$(find driverless)/data/1.txt"/>
+    	<param name="file_path" value="$(find driverless)/data/rec.txt"/>
     	
     	
     </node>

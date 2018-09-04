@@ -242,6 +242,10 @@ add_executable(record_data_node src/record_data/record_data.cpp)
 add_dependencies(record_data_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(record_data_node ${catkin_LIBRARIES})
 
+add_executable(ReadGpsPointAndPublish_node src/gps/ReadGpsPointAndPublish.cpp)
+add_dependencies(ReadGpsPointAndPublish_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+target_link_libraries(ReadGpsPointAndPublish_node ${catkin_LIBRARIES})
+
 #add_executable(car_tf src/tf/tf.cpp)
 #target_link_libraries(car_tf  ${catkin_LIBRARIES})
 
