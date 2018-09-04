@@ -17,12 +17,22 @@ void Control_by_gps::run()
 	
 	fp = fopen(file_path.c_str(),"r");
 	
-	for(int i=0;i++;i<MAX_TARGET_NUM)
+	if(fp==NULL)
 	{
-		fscanf(fp,"%f\t%f\n",Arr_target_point[i].lon,Arr_target_point[i].lat);
-		total_target_num = i+1;
-		if(fp==NULL) break;
+		ROS_INFO("open file failed");
+		exit(0);
 	}
+	
+	for(int i=0;i<MAX_TARGET_NUM;i++)
+	{
+	ROS_INFO("%d",i);
+		fscanf(fp,"%lf\t%lf\n",&Arr_target_point[i].lon,&Arr_target_point[i].lat);
+		total_target_num = i+1;
+		if(feof(fp)) break;
+	}
+	ROS_INFO("total_target_num=%d",total_target_num);
+	for(int i=0;i<total_target_num;i++)
+		ROS_INFO("%f,%f",Arr_target_point[i].lon,Arr_target_point[i].lat);
 	
 	
 	debug_fp = fopen("/home/ubuntu/projects/catkin_ws/src/driverless/data/debug.txt","w"); //use to record debug msg
@@ -63,6 +73,7 @@ float Control_by_gps::relative_dis_yaw(gpsMsg_t  gps_base,gpsMsg_t  gps,unsigned
 {
 	x = (gps.lon -gps_base.lon)*111000*cos(gps.lat *PI_/180.);
 	y = (gps.lat -gps_base.lat ) *111000;
+	ROS_INFO("%f\t%f\t%f\t%f",gps.lon,gps.lat,gps_base.lon,gps_base.lat);
 	if(disORyaw = CAL_DIS)
 		return  sqrt( x * x + y * y);
 	else
@@ -85,25 +96,31 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 		
 		current_target_seq ++;
 		
-		if(current_target_seq > total_target_num)
-			current_target_seq =1;
+		if(current_target_seq > total_target_num) //当现在的目标序号大于总的目标数时，说明目标已经跟踪了一个循环
+			current_target_seq =1; //目标序号置1，重新跟踪第一个目标
 		
-		current_segment_seq = 1;
+		current_segment_seq = 1; //刚更新了目标序列，因此新目标跟踪子片段序列为1
 		
 		current_target_point = Arr_target_point[current_target_seq - 1];
 		
-		if(current_target_seq == 0)
+		//ROS_INFO("current_target_point=%f\t%f",current_target_point.lat,current_target_point.lon);
+		
+		if(current_target_seq == 1) //当前目标序列为1，表明上一个目标为目标序列的最后一个
 			last_target_point = Arr_target_point[total_target_num-1];
 		else
-			last_target_point = Arr_target_point[current_target_seq-2];
+			last_target_point = Arr_target_point[current_target_seq-1];
 			
 		dis_between_2_target = relative_dis_yaw(current_target_point,last_target_point,CAL_DIS); //the distance between two target
+		
 		total_segment_num = dis_between_2_target/path_tracking_resolution;
-		lat_increment = (current_target_point.lat - last_target_point.lat)/total_segment_num;
+		
+		ROS_INFO("dis_between_2_target=%f\tpath_tracking_resolution=%f",dis_between_2_target,path_tracking_resolution);
+		
+		lat_increment = (current_target_point.lat - last_target_point.lat)/total_segment_num; //计算每个跟踪点的经纬度增量
 		lon_increment = (current_target_point.lon - last_target_point.lon)/total_segment_num;
 	}
 	
-	current_track_point.lon = last_target_point.lon + lon_increment*current_segment_seq;
+	current_track_point.lon = last_target_point.lon + lon_increment*current_segment_seq;//计算当前跟踪点的经纬度
 	current_track_point.lat = last_target_point.lat + lat_increment*current_segment_seq;
 ////////////////////////////////////	
 	
@@ -114,16 +131,17 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	now_location.yaw = gps_msg->yaw; 
 	
 	
-	//ROS_INFO("A_lon=%f\tA_lat=%f\tB_lon=%f\tB_lat=%f\r\n",now_location.lon,now_location.lat,target_location.lon,target_location.lat);
+	ROS_INFO("A_lon=%f\tA_lat=%f\tB_lon=%f\tB_lat=%f\r\n",now_location.lon,now_location.lat,last_target_point.lon,last_target_point.lat);
 	
-	dis2tracking_point = relative_dis_yaw(now_location,current_track_point,CAL_DIS);  
+	dis2tracking_point = relative_dis_yaw(now_location,current_track_point,CAL_DIS);  //计算当前点到当前跟踪点的距离
 	
-	t_yaw_now = atan2( x, y)*180/PI_;
+	t_yaw_now = atan2( x, y)*180/PI_;  //xy为类成员变量，用作记录两点的相对坐标，上面调用了relative__dis_yaw，计算了xy
 	
 	
-	if(dis2tracking_point < DisThreshold) 
+	if(dis2tracking_point < DisThreshold) //当前点与当前跟踪点距离小于DisThreshold时，切换到下一个跟踪点
 		current_segment_seq ++;
-	if(current_segment_seq > total_segment_num)
+		
+	if(current_segment_seq > total_segment_num)//当前跟踪点序号大于总跟踪片段时，表明当前目标点跟踪完毕，切换到下一个目标点
 		new_target_flag = 1;//switch to next target 
 	
 	//float lateral_err =  LateralError(t_yaw_start,t_yaw_now, dis2end);
@@ -160,7 +178,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	
 	steer_radius[0] = steer_radius[1];
 #else
-	float steer_radius = 0.5*dis2tracking_point/sin(yaw_err*PI_/180) ; 
+	float steer_radius = 0.5*dis2tracking_point/sin(yaw_err*PI_/180) ; //预瞄准发计算期望转弯半径
 	
 	if(fabs(steer_radius) < RadiusThreshold)
 		linear_speed = 0.5;//转弯半径太小， 降低速度 
@@ -182,7 +200,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	controlMsg.linear.x = linear_speed;
 	
 	ROS_INFO("t_yaw=%f\tyaw=%f\tyaw_err=%f\tdis2end=%f",t_yaw_now,now_location.yaw,yaw_err,dis2tracking_point);
-	ROS_INFO("target:%d//%d\tsegment:%d//%d\r\n",current_target_seq,total_target_num,current_segment_seq,total_segment_num);
+	ROS_INFO("target:%d/%d\tsegment:%d/%d\r\n",current_target_seq,total_target_num,current_segment_seq,total_segment_num);
 	
 	//control_pub.publish(controlMsg); //gps control the car have condition (are there a obstacle?)  
 }
