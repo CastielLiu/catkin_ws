@@ -222,10 +222,6 @@ add_executable(lower_control_node src/lower_control/lower_control.cpp)
 add_dependencies(lower_control_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(lower_control_node ${catkin_LIBRARIES})
 
-add_executable(upper_control_node src/upper_control/upper_control.cpp  src/upper_control/pid.cpp)
-add_dependencies(upper_control_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-target_link_libraries(upper_control_node ${catkin_LIBRARIES})
-
 add_executable(car_status_node src/car_status/car_status.cpp)
 add_dependencies(car_status_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(car_status_node ${catkin_LIBRARIES})

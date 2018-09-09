@@ -13,7 +13,7 @@ void Control_by_gps::run()
 	private_nh.param<float>("angular_speed_pid_Kp",angular_speed_pid.Kp,0.0);
 	private_nh.param<float>("angular_speed_pid_Ki",angular_speed_pid.Ki,0.0);
 	private_nh.param<float>("angular_speed_pid_Kd",angular_speed_pid.Kd,0.0);
-	private_nh.param<std::string>("file_path",file_path,std::string("/home/ubuntu/projects/catkin_ws/src/driverless/data/1.txt"));
+	private_nh.param<std::string>("file_path",file_path,std::string("/home/wendao/projects/catkin_ws/src/driverless/data/1.txt"));
 	
 	fp = fopen(file_path.c_str(),"r");
 	
@@ -23,9 +23,9 @@ void Control_by_gps::run()
 		exit(0);
 	}
 	
+#if TRACKING_MODE == VERTEX_TRACKING	
 	for(int i=0;i<MAX_TARGET_NUM;i++)
 	{
-	ROS_INFO("%d",i);
 		fscanf(fp,"%lf\t%lf\n",&Arr_target_point[i].lon,&Arr_target_point[i].lat);
 		total_target_num = i+1;
 		if(feof(fp)) break;
@@ -33,9 +33,40 @@ void Control_by_gps::run()
 	ROS_INFO("total_target_num=%d",total_target_num);
 	for(int i=0;i<total_target_num;i++)
 		ROS_INFO("%f,%f",Arr_target_point[i].lon,Arr_target_point[i].lat);
+#elif TRACKING_MODE == CURVE_TRACKING
+	for(int i=0;i<5;i++)
+	{
+		fscanf(fp,"%lf\t%lf\n",&fit_point[i].lon,&fit_point[i].lat);
+		if(feof(fp)) break;
+	}
 	
+	 x1 = fit_point[0].lat - fit_point[0].lat;
+	 y1 = fit_point[0].lon - fit_point[0].lon;
 	
-	debug_fp = fopen("/home/ubuntu/projects/catkin_ws/src/driverless/data/debug.txt","w"); //use to record debug msg
+	 x2 = (fit_point[1].lat - fit_point[0].lat )*100000;
+	 y2 = (fit_point[1].lon - fit_point[0].lon)*100000;
+	
+	 x3 = (fit_point[2].lat - fit_point[0].lat)*100000;
+	 y3 = (fit_point[2].lon - fit_point[0].lon)*100000;
+	
+	 x4 = (fit_point[3].lat - fit_point[0].lat)*100000;
+	 y4 = (fit_point[3].lon - fit_point[0].lon)*100000;
+	 
+	 std::cout << x1 <<"  "<<x2<<"  "<<x3<<"  "<<x4<<"  "<<y1<<"  "<<y2<<"  "<<y3<<"  "<<y4<<"  "<<std::endl;
+	
+	coefficient[3] = ((((y3-y2)/(x3-x2)-(y2-y1)/(x2-x1))/(x3-x1))-(((y4-y3)/(x4-x3)-(y3-y2)/(x3-x2))/(x4-x2)))/(x1-x4);
+	coefficient[2] = ((y3-y1)/(x3-x1)-(y2-y1)/(x2-x1)-coefficient[3]*(x3*x3-x2*x2+x1*x3-x1*x2))/(x3-x2);
+	coefficient[1] = ((y2-y1)-coefficient[2]*(x2-x1)*(x2+x1)-coefficient[3]*(x2*x2*x2-x1*x1*x1))/(x2-x1);
+	coefficient[0] = y1-coefficient[1]*x1-coefficient[2]*x1*x1-coefficient[3]*x1*x1*x1;	
+	for(int i =0;i<4;i++)
+		printf("coefficient[i]%lf\r\n",coefficient[i]);
+
+	///////点读入以后计算多项式系数 here
+	total_segment_num = (fit_point[3].lat - fit_point[0].lat)/0.000001;
+	current_segment_seq = 1;
+#endif	
+	
+	debug_fp = fopen("/home/wendao/projects/catkin_ws/src/driverless/data/debug.txt","w"); //use to record debug msg
 	if(debug_fp == NULL)
 	{
 		ROS_INFO("open %s failed !!!","debug.txt");
@@ -56,8 +87,10 @@ Control_by_gps::Control_by_gps()
 	now_location   = {0.0,0.0,0.0};
 	start_location = {0.0,0.0,0.0};
 	target_location= {0.0,0.0,0.0};
+#if TRACKING_MODE == VERTEX_TRACKING
 	new_target_flag = 1; //init new_target_flag = 1 
 	current_target_seq = 0; // current_target_seq will ++;
+#endif
 	current_segment_seq =1;
 	
 	PID_init(&angular_speed_pid);
@@ -73,7 +106,7 @@ float Control_by_gps::relative_dis_yaw(gpsMsg_t  gps_base,gpsMsg_t  gps,unsigned
 {
 	x = (gps.lon -gps_base.lon)*111000*cos(gps.lat *PI_/180.);
 	y = (gps.lat -gps_base.lat ) *111000;
-	ROS_INFO("%f\t%f\t%f\t%f",gps.lon,gps.lat,gps_base.lon,gps_base.lat);
+	//ROS_INFO("%f\t%f\t%f\t%f",gps.lon,gps.lat,gps_base.lon,gps_base.lat);
 	if(disORyaw = CAL_DIS)
 		return  sqrt( x * x + y * y);
 	else
@@ -86,10 +119,15 @@ float Control_by_gps::LateralError(double t_yaw_start,double t_yaw_now,float dis
 	return (sin((t_yaw_start - t_yaw_now)*PI_/180)) *dis2end;
 }
 
+
+
 void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //Callback
 {
+	now_location.lon = gps_msg->lon;
+	now_location.lat = gps_msg->lat; 
+	now_location.yaw = gps_msg->yaw; 
 
-/////////////////////////////////
+#if TRACKING_MODE==VERTEX_TRACKING
 	if(new_target_flag ==1)
 	{
 		new_target_flag =0; //reset
@@ -115,7 +153,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 		
 		total_segment_num = dis_between_2_target/path_tracking_resolution;
 		
-		ROS_INFO("dis_between_2_target=%f\tpath_tracking_resolution=%f",dis_between_2_target,path_tracking_resolution);
+	//	ROS_INFO("dis_between_2_target=%f\tpath_tracking_resolution=%f",dis_between_2_target,path_tracking_resolution);
 		
 		lat_increment = (current_target_point.lat - last_target_point.lat)/total_segment_num; //计算每个跟踪点的经纬度增量
 		lon_increment = (current_target_point.lon - last_target_point.lon)/total_segment_num;
@@ -124,13 +162,6 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	current_track_point.lon = last_target_point.lon + lon_increment*current_segment_seq;//计算当前跟踪点的经纬度
 	current_track_point.lat = last_target_point.lat + lat_increment*current_segment_seq;
 ////////////////////////////////////	
-	
-
-
-	now_location.lon = gps_msg->lon;
-	now_location.lat = gps_msg->lat; 
-	now_location.yaw = gps_msg->yaw; 
-	
 	
 	//ROS_INFO("A_lon=%f\tA_lat=%f\tB_lon=%f\tB_lat=%f\r\n",now_location.lon,now_location.lat,last_target_point.lon,last_target_point.lat);
 	
@@ -144,10 +175,35 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 		
 	if(current_segment_seq > total_segment_num)//当前跟踪点序号大于总跟踪片段时，表明当前目标点跟踪完毕，切换到下一个目标点
 		new_target_flag = 1;//switch to next target 
+		
+	ROS_INFO("target:%d/%d\tsegment:%d/%d\r\n",current_target_seq,total_target_num,current_segment_seq,total_segment_num);
 	
 	//float lateral_err =  LateralError(t_yaw_start,t_yaw_now, dis2end);
 	
-	float yaw_err = now_location.yaw - t_yaw_now; 
+#elif TRACKING_MODE == CURVE_TRACKING
+	
+	float temp1 = x1 + 0.1 * current_segment_seq;
+	current_track_point.lat = temp1 * 0.00001 + fit_point[0].lat;
+	
+	float temp2 = coefficient[0] + coefficient[1] * temp1 +
+							  coefficient[2]*temp1 * temp1 + 
+							  coefficient[3]*temp1*temp1*temp1;
+	current_track_point.lon = temp2 * 0.00001 + fit_point[0].lon;
+							  
+	dis2tracking_point = relative_dis_yaw(now_location,current_track_point,CAL_DIS);  //计算当前点到当前跟踪点的距离
+	
+	t_yaw_now = atan2( x, y)*180/PI_;  //xy为类成员变量，用作记录两点的相对坐标，上面调用了relative__dis_yaw，计算了xy
+	
+	
+	if(dis2tracking_point < DisThreshold) //当前点与当前跟踪点距离小于DisThreshold时，切换到下一个跟踪点
+		current_segment_seq ++;
+	if(total_segment_num>current_segment_seq)	
+		printf("%.7f\t%.7f\r\n",current_track_point.lon,current_track_point.lat);
+	else
+		ros::shutdown();
+
+#endif	
+	float yaw_err = now_location.yaw - t_yaw_now;  
 	
 #ifdef  TEST_RADIUS	
 
@@ -200,8 +256,9 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	controlMsg.angular.z = angular_speed;   
 	controlMsg.linear.x = linear_speed;
 	
-	ROS_INFO("t_yaw=%f\tyaw=%f\tyaw_err=%f\tdis2end=%f",t_yaw_now,now_location.yaw,yaw_err,dis2tracking_point);
-	ROS_INFO("target:%d/%d\tsegment:%d/%d\r\n",current_target_seq,total_target_num,current_segment_seq,total_segment_num);
+	//ROS_INFO("t_yaw=%f\tyaw=%f\tyaw_err=%f\tdis2end=%f",t_yaw_now,now_location.yaw,yaw_err,dis2tracking_point);
+	
 	
 	//control_pub.publish(controlMsg); //gps control the car have condition (are there a obstacle?)  
 }
+

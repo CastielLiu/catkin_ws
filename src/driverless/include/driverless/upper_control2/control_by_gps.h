@@ -10,6 +10,12 @@
 #define CAL_DIS 1
 #define CAL_YAW 0
 
+#define TRACKING_MODE  2
+
+#define VERTEX_TRACKING  1
+#define CURVE_TRACKING   2
+
+
 #ifndef PI_
 #define PI_ 3.141592653589
 #endif
@@ -28,18 +34,27 @@ class Control_by_gps
 {
 	private:
 		gpsMsg_t now_location ,start_location ,target_location;
-		
+#if TRACKING_MODE == VERTEX_TRACKING		
 		gpsMsg_t Arr_target_point[MAX_TARGET_NUM];//storage all target peak
 		gpsMsg_t current_target_point ,last_target_point;
-		gpsMsg_t current_track_point ;
 		
 		double lat_increment,lon_increment;
 		int total_segment_num,current_segment_seq;
 		unsigned char total_target_num,current_target_seq;
 		float  dis_between_target;
-		float  path_tracking_resolution;
 		bool new_target_flag;
 		
+		float dis_between_2_target;
+#elif TRACKING_MODE == CURVE_TRACKING
+		gpsMsg_t fit_point[4]; //the point use to fit curve
+		double coefficient[4];
+		int total_segment_num,current_segment_seq;
+		double x1,x2,x3,x4,y1,y2,y3,y4;
+#endif	
+		gpsMsg_t current_track_point ;	
+		float dis2tracking_point;
+		
+		float  path_tracking_resolution;
 		float x,y; //减少系统计算时间，计算距离之后存储相对坐标，计算航向角时直接利用
 		
 	
@@ -51,8 +66,7 @@ class Control_by_gps
 		std::string file_path;
 		double t_yaw_start,t_yaw_now;
 		
-		float dis2tracking_point;
-		float dis_between_2_target;
+		
 		
 		float DisThreshold,RadiusThreshold;
 		
