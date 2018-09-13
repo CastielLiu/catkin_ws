@@ -1,11 +1,12 @@
 <!-- record_data -->
 <launch>
 	<node name="gps_node" pkg ="driverless" type="gps_node" output="screen">
-		<param name="gps_port_name" type="string"  value = "/dev/ttyUSB1" />
+		<param name="gps_port_name" type="string"  value = "/dev/ttyUSB0" />
 	</node>
 
 	<node name="record_data_node" pkg ="driverless" type="record_data_node" output="screen">
 		<param name="sample_dis" value="0.1"/>
+		<param name="record_mode" value="1"/>
 		<param name="file_path" value="$(find driverless)/data/record_gps_points.txt"/>
 	</node>
 </launch>
