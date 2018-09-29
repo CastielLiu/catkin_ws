@@ -23,6 +23,15 @@ void Control_by_gps::run()
 		exit(0);
 	}
 	
+	debug_fp = fopen("/home/ubuntu/projects/catkin_ws/src/driverless/data/debug.txt","w");
+	
+	if(debug_fp==NULL)
+	{
+		ROS_INFO("open debug.txt failed");
+		exit(0);
+	}
+	
+	
 #if TRACKING_MODE == VERTEX_TRACKING	
 	for(int i=0;i<MAX_TARGET_NUM;i++)
 	{
@@ -66,12 +75,12 @@ void Control_by_gps::run()
 	current_segment_seq = 1;
 #endif	
 	
-	debug_fp = fopen("/home/wendao/projects/catkin_ws/src/driverless/data/debug.txt","w"); //use to record debug msg
-	if(debug_fp == NULL)
-	{
-		ROS_INFO("open %s failed !!!","debug.txt");
-		exit(0);
-	}
+	//debug_fp = fopen("$(rospack find driverless)/data/debug.txt","w"); //use to record debug msg
+	//if(debug_fp == NULL)
+	//{
+	//	ROS_INFO("open %s failed !!!","debug.txt");
+	//	exit(0);
+	//}
 	if(fp==NULL) 
 	{
 		ROS_INFO("open %s failed !!!",file_path.c_str());
@@ -173,6 +182,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	if(dis2tracking_point < DisThreshold) //当前点与当前跟踪点距离小于DisThreshold时，切换到下一个跟踪点
 		current_segment_seq ++;
 		
+	ROS_INFO("dis2tracking_point = %f",dis2tracking_point);	
 	if(current_segment_seq > total_segment_num)//当前跟踪点序号大于总跟踪片段时，表明当前目标点跟踪完毕，切换到下一个目标点
 		new_target_flag = 1;//switch to next target 
 		
@@ -255,6 +265,9 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	
 	controlMsg.angular.z = angular_speed;   
 	controlMsg.linear.x = linear_speed;
+	
+	fprintf(debug_fp,"%.7f,%.7f,%.2f,%.7f,%.7f,%.2f,%.2f,%.2f\r\n",\
+		now_location.lon,now_location.lat,now_location.yaw,current_track_point.lon,current_track_point.lat,t_yaw_now,angular_speed,linear_speed);
 	
 	//ROS_INFO("t_yaw=%f\tyaw=%f\tyaw_err=%f\tdis2end=%f",t_yaw_now,now_location.yaw,yaw_err,dis2tracking_point);
 	

@@ -10,7 +10,7 @@
 #define CAL_DIS 1
 #define CAL_YAW 0
 
-#define TRACKING_MODE  2
+#define TRACKING_MODE  1
 
 #define VERTEX_TRACKING  1
 #define CURVE_TRACKING   2

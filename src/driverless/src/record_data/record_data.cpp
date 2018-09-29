@@ -46,6 +46,8 @@ void Record:: run()
 	ros::NodeHandle nh;
 	ros::NodeHandle private_nh("~");
 	
+	private_nh.param<int>("record_mode",mode,0);
+	
 	
 	private_nh.param<std::string>("file_path",file_path,"$(rospack find driverless)data/gps.txt");
 	
@@ -85,19 +87,20 @@ void Record::recordToFile()
 
 void Record::gps_callback(const driverless::Gps& gpsMsg)
 {
+	current_point.lat = gpsMsg.lat;
+	current_point.lon = gpsMsg.lon;
+		
 	float x = (gpsMsg.lon -last_point.lon)*111000*cos(gpsMsg.lat *PI_/180.);
 	float y = (gpsMsg.lat -last_point.lat ) *111000;
 
-	if(x*x+y*y >= sample_distance*sample_distance)	
-	{
-		current_point.lat = gpsMsg.lat;
-		current_point.lon = gpsMsg.lon;
-		last_point = current_point;
-	}
-	if(mode ==0)
+	//ROS_INFO("test  mode =%d",mode);	
+	//ROS_INFO("distance=%f",sqrt(x*x+y*y));
+	
+	if(x*x+y*y >= sample_distance*sample_distance && mode==0)	
 	{
 		fprintf(fp,"%.8f\t%.8f\r\n",current_point.lon,current_point.lat);
 		ROS_INFO("%.8f\t%.8f\r\n",current_point.lon,current_point.lat);
+		last_point = current_point;
 	}
 }
 
@@ -105,13 +108,12 @@ int main(int argc,char**argv)
 {
 	ros::init(argc,argv,"record_data_node");
 	
-	ros::NodeHandle param_nh("~");
 	
 	Record record;
 	
 	record.run();
 	
-	param_nh.param<int>("record_mode",record.mode,0);
+	
 	
 	if(record.mode != 0)	
 	{
@@ -119,28 +121,26 @@ int main(int argc,char**argv)
 		
 		char key_press_flag = 0;
 			
-		int keys_fd=open("/dev/input/event1",O_RDONLY|O_NONBLOCK);//只读&非阻塞MODE
+		int keys_fd=open("/dev/input/event5",O_RDONLY|O_NONBLOCK);//只读&非阻塞MODE
 		 
 		if(keys_fd<=0)
 		{   
 		    ROS_INFO("open key_event file failed");
 		    ros::shutdown();
 		}   
-		ros::Rate r(20);
+		ros::Rate r(50);
 
 		while(ros::ok())
 		{
 			read(keys_fd,&key_event,sizeof(struct input_event));
-			//if(key_event.type==1)
-			//	printf("key %i state %i \n",key_event.code,key_event.value);
-			if(key_event.type==1 && key_event.code==28 && key_event.value !=0 && key_press_flag ==0)
+			//if(key_event.type!=0)
+			//	printf("type==%i  key %i state %i \n",key_event.type,key_event.code,key_event.value);
+			if(key_event.type==2 && key_event.code==8 && key_event.value ==-1 )
 			{
-				key_press_flag = 1;
-		
 				record.recordToFile();
 			}
-			read(keys_fd,&key_event,sizeof(struct input_event));
-			if(key_event.type==1 && key_event.code==28 && key_event.value==0) key_press_flag =0;
+			//read(keys_fd,&key_event,sizeof(struct input_event));
+		//	if(key_event.type==1 && key_event.code==272 && key_event.value==0) key_press_flag =0;
 	
 			ros::spinOnce();
 			r.sleep();
