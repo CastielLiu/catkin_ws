@@ -1,0 +1,9 @@
+ # -*- coding:utf-8 -*-
+ 
+键盘事件检测，不支持长按，长按默认为一次短按
+key_port 类型为std::string  参数默认为/dev/input/event0 ,可通过launch文件传参
+node_type = "key_event"  pkg="key_event"  topic="/key_event"
+消息类型 key_event::KeyEvent  code代表按键索引号，value为1
+检测到按键后节点才会发布消息，订阅者触发回调函数完成期望。
+# cat /proc/bus/input/devices
+利用上述命令获取时间信息，查看键盘时间的对应文件
