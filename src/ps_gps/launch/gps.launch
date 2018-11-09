@@ -1,8 +1,0 @@
-<launch>
-	<node  name="ps_serial" pkg="ps_gps" type="ps_serial" output="screen" >
-	</node>
-
-	<node  name="ps_receive" pkg="ps_gps" type="ps_receive" output="screen" >
-	</node>
-
-</launch>
