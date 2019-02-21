@@ -254,7 +254,8 @@ void ChassisDriver::handle_speed_msg(uint8_t* buffer_data){
   }
   delta_time_ = (now_ - last_time_).toSec();
   if (delta_time_ >= (0.5 / control_rate_)){
-    double delta_theta = (delta_right_ - delta_left_)/ (pulse_per_cycle_ * pid_rate_ * model_param_);
+    double delta_theta = (delta_right_ - delta_left_)/ (pulse_per_cycle_ * pid_rate_ * model_param_); 
+    //tan()
     double v_theta = delta_theta / delta_time_;
 
     double delta_dis = (delta_right_ + delta_left_) / (pulse_per_cycle_ * pid_rate_ * 2.0);
@@ -410,7 +411,8 @@ void ChassisDriver::run(){
 
   private_node.param<double>("maximum_encoding", maximum_encoding_, 32.0);
 
-  // 速度1m/s的情况下每个控制周期的脉冲数!!   reduction_ratio_减速比
+  // 单位速度下每个pid周期的脉冲数!!   reduction_ratio_减速比
+  //the parameter pid_rate_ is no use !! 先除  后乘
   pulse_per_cycle_ = reduction_ratio_ * encoder_resolution_ / (M_PI * wheel_diameter_ * pid_rate_);
 
   if (init()){
