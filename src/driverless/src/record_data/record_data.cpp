@@ -23,8 +23,8 @@ class Record
 		ros::Timer timer;
 	public:
 		Record();
-		~Record();	
-		void run();	
+		~Record();
+		void run();
 		void recordToFile();
 		int mode;	
 };
@@ -96,7 +96,7 @@ void Record::gps_callback(const driverless::Gps& gpsMsg)
 	//ROS_INFO("test  mode =%d",mode);	
 	//ROS_INFO("distance=%f",sqrt(x*x+y*y));
 	
-	if(x*x+y*y >= sample_distance*sample_distance && mode==0)	
+	if(x*x+y*y >= sample_distance*sample_distance && mode==0)
 	{
 		fprintf(fp,"%.8f\t%.8f\r\n",current_point.lon,current_point.lat);
 		ROS_INFO("%.8f\t%.8f\r\n",current_point.lon,current_point.lat);

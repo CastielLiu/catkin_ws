@@ -243,9 +243,9 @@ add_executable(ReadGpsPointAndPublish_node src/gps/ReadGpsPointAndPublish.cpp)
 add_dependencies(ReadGpsPointAndPublish_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
 target_link_libraries(ReadGpsPointAndPublish_node ${catkin_LIBRARIES})
 
-add_executable(whiteCarLowerControl_node src/whiteCarLowerControl/whiteCarLowerControl.cpp)
-add_dependencies(whiteCarLowerControl_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
-target_link_libraries(whiteCarLowerControl_node ${catkin_LIBRARIES})
+#add_executable(whiteCarLowerControl_node src/whiteCarLowerControl/whiteCarLowerControl.cpp)
+#add_dependencies(whiteCarLowerControl_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencpp)
+#target_link_libraries(whiteCarLowerControl_node ${catkin_LIBRARIES})
 
 
 #add_executable(car_tf src/tf/tf.cpp)

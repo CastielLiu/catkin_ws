@@ -73,7 +73,7 @@ void Control_by_gps::run()
 	///////点读入以后计算多项式系数 here
 	total_segment_num = (fit_point[3].lat - fit_point[0].lat)/0.000001;
 	current_segment_seq = 1;
-#endif	
+#endif
 	
 	//debug_fp = fopen("$(rospack find driverless)/data/debug.txt","w"); //use to record debug msg
 	//if(debug_fp == NULL)
@@ -229,7 +229,7 @@ void Control_by_gps::gps_callback(const driverless::Gps::ConstPtr& gps_msg)   //
 	
 	if(i>5)//not the first time in the function  
 	{		//刚进入程序时两者差别很大，由初值引起的，因此待程序稳定后再使用差值判断
-		if((steer_radius[1] - steer_radius[0]) > test_threshold)  
+		if((steer_radius[1] - steer_radius[0]) > test_threshold)
 			steer_radius[1] = steer_radius[0] + test_threshold;
 		else if((steer_radius[1] - steer_radius[0]) < -test_threshold)
 			steer_radius[1] = steer_radius[0] - test_threshold;

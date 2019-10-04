@@ -1,8 +1,0 @@
-<launch>
-	 <!-- Logger config -->
-
-	<node pkg="lidar_hesai" type="parted2" name="points_parted" respawn="true"/>
-	<node pkg="lidar_hesai" type="clustered" name="points_clustered" output="screen" respawn="true"/>
-
-	<node pkg="lidar_hesai" type="steer" name="points_steer" output="screen" respawn="true"/>
-</launch>

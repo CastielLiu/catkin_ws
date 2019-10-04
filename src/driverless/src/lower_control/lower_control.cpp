@@ -253,7 +253,8 @@ void ChassisDriver::handle_speed_msg(uint8_t* buffer_data){
     return;
   }
   delta_time_ = (now_ - last_time_).toSec();
-  if (delta_time_ >= (0.5 / control_rate_)){
+  if (delta_time_ >= (0.5 / control_rate_))
+  {
     double delta_theta = (delta_right_ - delta_left_)/ (pulse_per_cycle_ * pid_rate_ * model_param_); 
     //tan()
     double v_theta = delta_theta / delta_time_;
@@ -317,6 +318,7 @@ std::string ChassisDriver::print_hex(uint8_t* data, int length){
   return output;
 }
 
+//考虑编码器的上下计数
 void ChassisDriver::cal_pulse(int &current, int &receive, int &delta){
   if (receive > current){
     delta = (receive - current) < (current - receive + 65535) ? (receive - current) : (receive - current - 65535);

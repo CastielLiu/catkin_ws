@@ -7,7 +7,7 @@
 #define pi 3.14159265
 #define READ_NUM  256
 #define CRC16_CCITT 0x1021
-#define INITIAL_REMAINDER  0xFFFF  
+#define INITIAL_REMAINDER  0xFFFF
 
 using namespace std;
 
